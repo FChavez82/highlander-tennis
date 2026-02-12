@@ -1,0 +1,89 @@
+/**
+ * /api/matches/[id]
+ *
+ * PUT    — Update match result (requires admin session)
+ *          Body: { score: string, date_played: string }
+ * DELETE — Delete a match (requires admin session)
+ */
+import { NextRequest, NextResponse } from "next/server";
+import { updateMatch, deleteMatch, resetMatch } from "@/lib/db";
+import { isAuthenticated } from "@/lib/auth";
+
+export async function PUT(
+	request: NextRequest,
+	{ params }: { params: Promise<{ id: string }> }
+) {
+	try {
+		if (!(await isAuthenticated())) {
+			return NextResponse.json(
+				{ error: "No autorizado." },
+				{ status: 401 }
+			);
+		}
+
+		const { id } = await params;
+		const matchId = parseInt(id);
+		if (isNaN(matchId)) {
+			return NextResponse.json(
+				{ error: "ID inválido." },
+				{ status: 400 }
+			);
+		}
+
+		const body = await request.json();
+
+		/* If reset=true, clear the match result */
+		if (body.reset) {
+			const match = await resetMatch(matchId);
+			return NextResponse.json(match);
+		}
+
+		const { score, date_played } = body;
+
+		if (!score || !date_played) {
+			return NextResponse.json(
+				{ error: "Marcador y fecha son requeridos." },
+				{ status: 400 }
+			);
+		}
+
+		const match = await updateMatch(matchId, score, date_played);
+		return NextResponse.json(match);
+	} catch {
+		return NextResponse.json(
+			{ error: "Error al actualizar partido." },
+			{ status: 500 }
+		);
+	}
+}
+
+export async function DELETE(
+	_request: NextRequest,
+	{ params }: { params: Promise<{ id: string }> }
+) {
+	try {
+		if (!(await isAuthenticated())) {
+			return NextResponse.json(
+				{ error: "No autorizado." },
+				{ status: 401 }
+			);
+		}
+
+		const { id } = await params;
+		const matchId = parseInt(id);
+		if (isNaN(matchId)) {
+			return NextResponse.json(
+				{ error: "ID inválido." },
+				{ status: 400 }
+			);
+		}
+
+		await deleteMatch(matchId);
+		return NextResponse.json({ success: true });
+	} catch {
+		return NextResponse.json(
+			{ error: "Error al eliminar partido." },
+			{ status: 500 }
+		);
+	}
+}
