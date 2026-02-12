@@ -4,6 +4,9 @@
  *
  * Requires POSTGRES_URL in .env.local
  */
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import { sql } from "@vercel/postgres";
 
 async function setupDatabase() {

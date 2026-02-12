@@ -4,6 +4,9 @@
  *
  * Usage: npm run seed
  */
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import { sql } from "@vercel/postgres";
 
 const MALE_PLAYERS = [
