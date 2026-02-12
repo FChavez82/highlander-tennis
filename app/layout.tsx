@@ -14,14 +14,21 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="es">
-			<body className="min-h-screen flex flex-col">
-				<NavBar />
-				<main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
-					{children}
-				</main>
-				<footer className="text-center text-sm text-gray-400 py-4 border-t">
-					Highlander Tennis Club &copy; {new Date().getFullYear()}
-				</footer>
+			<body>
+				<div className="lg-bg">
+					{/* Animated gradient blobs */}
+					<div className="lg-blob lg-blob-1" aria-hidden="true" />
+					<div className="lg-blob lg-blob-2" aria-hidden="true" />
+
+					<NavBar />
+
+					<main className="lg-wrap">{children}</main>
+
+					<footer className="lg-wrap lg-footer">
+						<span>Highlander Tennis Club &copy; {new Date().getFullYear()}</span>
+						<span className="lg-muted">Torneo Round-Robin</span>
+					</footer>
+				</div>
 			</body>
 		</html>
 	);

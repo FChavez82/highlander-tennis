@@ -4,8 +4,7 @@ import { useState } from "react";
 import type { Match } from "@/lib/db";
 
 /**
- * Client-side filter for the calendar schedule.
- * Allows filtering by category and status (Pendiente / Jugado / Todos).
+ * Calendar filter and display — liquid glass style.
  */
 export default function CalendarFilter({ matches }: { matches: Match[] }) {
 	const [catFilter, setCatFilter] = useState<"all" | "M" | "F">("all");
@@ -17,55 +16,39 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 		return true;
 	});
 
-	/* Group matches: pending first, then played (most recent first) */
 	const pending = filtered.filter((m) => m.status === "pendiente");
 	const played = filtered.filter((m) => m.status === "jugado");
 
 	return (
 		<>
-			{/* Filters row */}
-			<div className="flex flex-wrap gap-4">
-				{/* Category filter */}
-				<div className="flex gap-2">
+			{/* Filters */}
+			<div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+				<div style={{ display: "flex", gap: 8 }}>
 					{(["all", "M", "F"] as const).map((f) => (
 						<button
 							key={f}
 							onClick={() => setCatFilter(f)}
-							className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-colors ${
-								catFilter === f
-									? "bg-court-700 text-white shadow"
-									: "bg-gray-200 text-gray-600 hover:bg-gray-300"
-							}`}
+							className={`lg-pill ${catFilter === f ? "lg-pill-active" : ""}`}
 						>
 							{f === "all" ? "Todas" : f === "M" ? "Masc" : "Fem"}
 						</button>
 					))}
 				</div>
-
-				{/* Status filter */}
-				<div className="flex gap-2">
+				<div style={{ display: "flex", gap: 8 }}>
 					{(["all", "pendiente", "jugado"] as const).map((f) => (
 						<button
 							key={f}
 							onClick={() => setStatusFilter(f)}
-							className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-colors ${
-								statusFilter === f
-									? "bg-court-700 text-white shadow"
-									: "bg-gray-200 text-gray-600 hover:bg-gray-300"
-							}`}
+							className={`lg-pill ${statusFilter === f ? "lg-pill-active" : ""}`}
 						>
-							{f === "all"
-								? "Todos"
-								: f === "pendiente"
-									? "Pendientes"
-									: "Jugados"}
+							{f === "all" ? "Todos" : f === "pendiente" ? "Pendientes" : "Jugados"}
 						</button>
 					))}
 				</div>
 			</div>
 
-			{/* Count summary */}
-			<p className="text-sm text-gray-500">
+			{/* Summary */}
+			<p className="lg-muted" style={{ fontSize: 13, margin: 0 }}>
 				{filtered.length} partido{filtered.length !== 1 ? "s" : ""} &middot;{" "}
 				{pending.length} pendiente{pending.length !== 1 ? "s" : ""} &middot;{" "}
 				{played.length} jugado{played.length !== 1 ? "s" : ""}
@@ -73,29 +56,22 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 
 			{/* Match list */}
 			{filtered.length === 0 ? (
-				<div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
-					No hay partidos para mostrar.
+				<div className="lg-card" style={{ padding: 32, textAlign: "center" }}>
+					<span className="lg-muted">No hay partidos para mostrar.</span>
 				</div>
 			) : (
-				<div className="space-y-2">
-					{/* Pending matches */}
+				<div style={{ display: "grid", gap: 10 }}>
 					{pending.length > 0 && (
 						<>
-							<h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mt-2">
-								Pendientes
-							</h2>
+							<div className="lg-kicker" style={{ marginTop: 4 }}>Pendientes</div>
 							{pending.map((match) => (
 								<MatchRow key={match.id} match={match} />
 							))}
 						</>
 					)}
-
-					{/* Played matches */}
 					{played.length > 0 && (
 						<>
-							<h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mt-4">
-								Jugados
-							</h2>
+							<div className="lg-kicker" style={{ marginTop: 8 }}>Jugados</div>
 							{played.map((match) => (
 								<MatchRow key={match.id} match={match} />
 							))}
@@ -107,53 +83,32 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 	);
 }
 
-/**
- * Single match row — shows players, status badge, score, and date.
- */
 function MatchRow({ match }: { match: Match }) {
 	return (
-		<div className="bg-white rounded-lg shadow-sm px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2">
+		<div className="lg-list-item" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
 			{/* Players */}
-			<div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-				<span className="font-medium text-gray-800 truncate">
-					{match.player_a_name}
-				</span>
-				<span className="text-gray-400 text-sm">vs</span>
-				<span className="font-medium text-gray-800 truncate">
-					{match.player_b_name}
-				</span>
+			<div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+				<b>{match.player_a_name}</b>
+				<span className="lg-muted" style={{ fontSize: 12 }}>vs</span>
+				<b>{match.player_b_name}</b>
 			</div>
 
-			{/* Right side: status, score, date, category badge */}
-			<div className="flex items-center gap-3 text-sm shrink-0">
+			{/* Right side */}
+			<div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
 				{match.status === "jugado" ? (
 					<>
-						<span className="font-bold text-court-700">{match.score}</span>
+						<span style={{ fontWeight: 800, color: "#a5b4fc" }}>{match.score}</span>
 						{match.date_played && (
-							<span className="text-gray-400">
-								{new Date(match.date_played).toLocaleDateString("es-ES", {
-									day: "numeric",
-									month: "short",
-								})}
+							<span className="lg-muted" style={{ fontSize: 12 }}>
+								{new Date(match.date_played).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
 							</span>
 						)}
-						<span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-							Jugado
-						</span>
+						<span className="lg-badge lg-badge-played">Jugado</span>
 					</>
 				) : (
-					<span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-						Pendiente
-					</span>
+					<span className="lg-badge lg-badge-pending">Pendiente</span>
 				)}
-
-				<span
-					className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-						match.category === "M"
-							? "bg-blue-100 text-blue-700"
-							: "bg-pink-100 text-pink-700"
-					}`}
-				>
+				<span className={`lg-badge ${match.category === "M" ? "lg-badge-m" : "lg-badge-f"}`}>
 					{match.category === "M" ? "M" : "F"}
 				</span>
 			</div>

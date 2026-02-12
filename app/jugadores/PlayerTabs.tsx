@@ -4,8 +4,7 @@ import { useState } from "react";
 import type { Standing } from "@/lib/db";
 
 /**
- * Client-side tabs for switching between Masculino and Femenino categories.
- * Displays a standings table for each category.
+ * Standings table with M/F tabs — liquid glass style.
  */
 export default function PlayerTabs({
 	masculino,
@@ -19,25 +18,17 @@ export default function PlayerTabs({
 
 	return (
 		<>
-			{/* Tab buttons */}
-			<div className="flex gap-2">
+			{/* Tab pills */}
+			<div style={{ display: "flex", gap: 10 }}>
 				<button
 					onClick={() => setTab("M")}
-					className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-						tab === "M"
-							? "bg-court-700 text-white shadow"
-							: "bg-gray-200 text-gray-600 hover:bg-gray-300"
-					}`}
+					className={`lg-pill ${tab === "M" ? "lg-pill-active" : ""}`}
 				>
 					Masculino ({masculino.length})
 				</button>
 				<button
 					onClick={() => setTab("F")}
-					className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-						tab === "F"
-							? "bg-court-700 text-white shadow"
-							: "bg-gray-200 text-gray-600 hover:bg-gray-300"
-					}`}
+					className={`lg-pill ${tab === "F" ? "lg-pill-active" : ""}`}
 				>
 					Femenino ({femenino.length})
 				</button>
@@ -45,47 +36,36 @@ export default function PlayerTabs({
 
 			{/* Standings table */}
 			{players.length === 0 ? (
-				<div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
-					No hay jugadores registrados en esta categoría.
+				<div className="lg-card" style={{ padding: 32, textAlign: "center" }}>
+					<span className="lg-muted">No hay jugadores registrados en esta categoria.</span>
 				</div>
 			) : (
-				<div className="bg-white rounded-xl shadow-sm overflow-hidden">
-					<div className="overflow-x-auto">
-						<table className="w-full text-sm">
+				<div className="lg-card" style={{ padding: 16 }}>
+					<div style={{ overflowX: "auto" }}>
+						<table className="lg-table">
 							<thead>
-								<tr className="bg-court-50 text-court-800 text-left">
-									<th className="px-4 py-3 font-semibold">#</th>
-									<th className="px-4 py-3 font-semibold">Jugador</th>
-									<th className="px-4 py-3 font-semibold text-center">G</th>
-									<th className="px-4 py-3 font-semibold text-center">P</th>
-									<th className="px-4 py-3 font-semibold text-center">Jugados</th>
-									<th className="px-4 py-3 font-semibold text-center">Pend.</th>
+								<tr>
+									<th>#</th>
+									<th>Jugador</th>
+									<th style={{ textAlign: "center" }}>G</th>
+									<th style={{ textAlign: "center" }}>P</th>
+									<th style={{ textAlign: "center" }}>Jugados</th>
+									<th style={{ textAlign: "center" }}>Pend.</th>
 								</tr>
 							</thead>
-							<tbody className="divide-y divide-gray-100">
+							<tbody>
 								{players.map((player, i) => (
-									<tr
-										key={player.id}
-										className="hover:bg-gray-50 transition-colors"
-									>
-										<td className="px-4 py-3 text-gray-500 font-medium">
-											{i + 1}
-										</td>
-										<td className="px-4 py-3 font-medium">
-											{player.name}
-										</td>
-										<td className="px-4 py-3 text-center text-green-600 font-semibold">
+									<tr key={player.id}>
+										<td><b>{i + 1}</b></td>
+										<td><b>{player.name}</b></td>
+										<td style={{ textAlign: "center", color: "#4ade80", fontWeight: 700 }}>
 											{player.won}
 										</td>
-										<td className="px-4 py-3 text-center text-red-500 font-semibold">
+										<td style={{ textAlign: "center", color: "#f87171", fontWeight: 700 }}>
 											{player.lost}
 										</td>
-										<td className="px-4 py-3 text-center text-gray-600">
-											{player.played}
-										</td>
-										<td className="px-4 py-3 text-center text-gray-400">
-											{player.pending}
-										</td>
+										<td style={{ textAlign: "center" }}>{player.played}</td>
+										<td style={{ textAlign: "center" }}>{player.pending}</td>
 									</tr>
 								))}
 							</tbody>
@@ -93,7 +73,7 @@ export default function PlayerTabs({
 					</div>
 
 					{/* Legend */}
-					<div className="px-4 py-2 bg-gray-50 text-xs text-gray-400 flex gap-4">
+					<div style={{ display: "flex", gap: 16, padding: "8px 14px", fontSize: 11 }} className="lg-muted">
 						<span>G = Ganados</span>
 						<span>P = Perdidos</span>
 						<span>Pend. = Pendientes</span>

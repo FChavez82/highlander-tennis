@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 /**
- * Navigation bar — responsive with a hamburger menu on mobile.
- * Links: Reglas, Jugadores, Resultados, Calendario, Admin.
+ * Navigation bar — liquid glass style with pill-shaped links.
+ * Responsive with hamburger menu on mobile.
  */
 
 const NAV_LINKS = [
@@ -21,109 +21,95 @@ export default function NavBar() {
 	const [menuOpen, setMenuOpen] = useState(false);
 
 	return (
-		<nav className="bg-court-800 text-white shadow-lg">
-			<div className="max-w-5xl mx-auto px-4">
-				<div className="flex items-center justify-between h-14">
-					{/* Logo / Brand */}
-					<Link
-						href="/"
-						className="text-xl font-bold tracking-wide text-gold-400 hover:text-gold-500 transition-colors"
-					>
-						Highlander
-					</Link>
-
-					{/* Desktop links */}
-					<div className="hidden md:flex items-center gap-1">
-						{NAV_LINKS.map((link) => (
-							<Link
-								key={link.href}
-								href={link.href}
-								className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-									pathname.startsWith(link.href)
-										? "bg-court-700 text-gold-400"
-										: "text-gray-200 hover:bg-court-700 hover:text-white"
-								}`}
-							>
-								{link.label}
-							</Link>
-						))}
-
-						{/* Admin link — slightly separated */}
-						<span className="w-px h-6 bg-court-600 mx-2" />
-						<Link
-							href="/admin"
-							className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-								pathname.startsWith("/admin")
-									? "bg-court-700 text-gold-400"
-									: "text-gray-400 hover:bg-court-700 hover:text-white"
-							}`}
-						>
-							Admin
-						</Link>
-					</div>
-
-					{/* Mobile hamburger button */}
-					<button
-						onClick={() => setMenuOpen(!menuOpen)}
-						className="md:hidden p-2 rounded-md hover:bg-court-700 transition-colors"
-						aria-label="Abrir menú"
-					>
-						<svg
-							className="w-6 h-6"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							{menuOpen ? (
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M6 18L18 6M6 6l12 12"
-								/>
-							) : (
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M4 6h16M4 12h16M4 18h16"
-								/>
-							)}
-						</svg>
-					</button>
+		<header className="lg-wrap lg-nav">
+			{/* Brand */}
+			<Link className="lg-brand" href="/" aria-label="Inicio">
+				<div className="lg-logo" aria-hidden="true" />
+				<div>
+					<b>Highlander</b>
+					<small>Torneo de Tenis</small>
 				</div>
+			</Link>
 
-				{/* Mobile menu */}
-				{menuOpen && (
-					<div className="md:hidden pb-3 space-y-1">
-						{NAV_LINKS.map((link) => (
-							<Link
-								key={link.href}
-								href={link.href}
-								onClick={() => setMenuOpen(false)}
-								className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-									pathname.startsWith(link.href)
-										? "bg-court-700 text-gold-400"
-										: "text-gray-200 hover:bg-court-700 hover:text-white"
-								}`}
-							>
-								{link.label}
-							</Link>
-						))}
+			{/* Desktop links */}
+			<nav className="lg-links hidden md:flex" aria-label="Navegacion">
+				{NAV_LINKS.map((link) => (
+					<Link
+						key={link.href}
+						href={link.href}
+						className={`lg-pill ${
+							pathname.startsWith(link.href) ? "lg-pill-active" : ""
+						}`}
+					>
+						{link.label}
+					</Link>
+				))}
+				<Link
+					href="/admin"
+					className={`lg-pill ${
+						pathname.startsWith("/admin") ? "lg-pill-primary" : ""
+					}`}
+				>
+					Admin
+				</Link>
+			</nav>
+
+			{/* Mobile hamburger */}
+			<button
+				onClick={() => setMenuOpen(!menuOpen)}
+				className="lg-pill md:hidden"
+				aria-label="Abrir menu"
+			>
+				<svg
+					width="20"
+					height="20"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					{menuOpen ? (
+						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+					) : (
+						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+					)}
+				</svg>
+			</button>
+
+			{/* Mobile menu overlay */}
+			{menuOpen && (
+				<nav
+					className="absolute top-full left-0 right-0 z-20 p-4 flex flex-col gap-2 md:hidden"
+					style={{
+						background: "rgba(7,10,18,.92)",
+						backdropFilter: "blur(18px)",
+						WebkitBackdropFilter: "blur(18px)",
+					}}
+				>
+					{NAV_LINKS.map((link) => (
 						<Link
-							href="/admin"
+							key={link.href}
+							href={link.href}
 							onClick={() => setMenuOpen(false)}
-							className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-								pathname.startsWith("/admin")
-									? "bg-court-700 text-gold-400"
-									: "text-gray-400 hover:bg-court-700 hover:text-white"
+							className={`lg-pill ${
+								pathname.startsWith(link.href) ? "lg-pill-active" : ""
 							}`}
+							style={{ textAlign: "center" }}
 						>
-							Admin
+							{link.label}
 						</Link>
-					</div>
-				)}
-			</div>
-		</nav>
+					))}
+					<Link
+						href="/admin"
+						onClick={() => setMenuOpen(false)}
+						className={`lg-pill ${
+							pathname.startsWith("/admin") ? "lg-pill-primary" : ""
+						}`}
+						style={{ textAlign: "center" }}
+					>
+						Admin
+					</Link>
+				</nav>
+			)}
+		</header>
 	);
 }

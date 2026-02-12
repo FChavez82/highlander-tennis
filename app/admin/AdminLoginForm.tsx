@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Login form for the admin panel.
- * Sends password to /api/admin/verify and reloads on success.
+ * Admin login form — liquid glass style.
  */
 export default function AdminLoginForm() {
 	const [password, setPassword] = useState("");
@@ -26,54 +25,45 @@ export default function AdminLoginForm() {
 			});
 
 			if (res.ok) {
-				/* Reload the page — the server layout will now see the cookie */
 				router.refresh();
 			} else {
 				const data = await res.json();
-				setError(data.error || "Contraseña incorrecta.");
+				setError(data.error || "Contrasena incorrecta.");
 			}
 		} catch {
-			setError("Error de conexión.");
+			setError("Error de conexion.");
 		} finally {
 			setLoading(false);
 		}
 	}
 
 	return (
-		<div className="bg-white rounded-xl shadow-sm p-6 max-w-md">
-			<p className="text-gray-600 mb-4">
-				Ingresa la contraseña del director del torneo para acceder al
-				panel de administración.
+		<div className="lg-card" style={{ padding: 24, maxWidth: 420 }}>
+			<p className="lg-muted" style={{ margin: "0 0 16px", fontSize: 14, lineHeight: 1.6 }}>
+				Ingresa la contrasena del director del torneo para acceder al panel de administracion.
 			</p>
 
-			<form onSubmit={handleSubmit} className="space-y-4">
+			<form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
 				<div>
-					<label
-						htmlFor="password"
-						className="block text-sm font-medium text-gray-700 mb-1"
-					>
-						Contraseña
+					<label htmlFor="password" style={{ display: "block", fontSize: 13, marginBottom: 6 }} className="lg-muted">
+						Contrasena
 					</label>
 					<input
 						id="password"
 						type="password"
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
-						placeholder="Ingresa la contraseña"
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-court-500 focus:border-court-500 outline-none"
+						placeholder="Ingresa la contrasena"
+						className="lg-input"
 						required
 					/>
 				</div>
 
 				{error && (
-					<p className="text-red-600 text-sm">{error}</p>
+					<div className="lg-message lg-message-error">{error}</div>
 				)}
 
-				<button
-					type="submit"
-					disabled={loading}
-					className="w-full bg-court-700 text-white py-2 px-4 rounded-lg font-medium hover:bg-court-800 transition-colors disabled:opacity-50"
-				>
+				<button type="submit" disabled={loading} className="lg-btn lg-btn-primary">
 					{loading ? "Verificando..." : "Ingresar"}
 				</button>
 			</form>

@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Standing } from "@/lib/db";
 
 /**
- * Admin player management — add new players and remove existing ones.
- * Uses client-side state with optimistic updates via router.refresh().
+ * Admin player management — liquid glass style.
  */
 export default function AdminPlayerManager({
 	initialMasculino,
@@ -22,11 +21,9 @@ export default function AdminPlayerManager({
 	const [deleteLoading, setDeleteLoading] = useState<number | null>(null);
 	const [message, setMessage] = useState("");
 
-	/* Add a new player */
 	async function handleAdd(e: React.FormEvent) {
 		e.preventDefault();
 		if (!name.trim()) return;
-
 		setLoading(true);
 		setMessage("");
 
@@ -36,36 +33,28 @@ export default function AdminPlayerManager({
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ name: name.trim(), category }),
 			});
-
 			if (res.ok) {
 				setName("");
-				setMessage(`Jugador "${name.trim()}" agregado con éxito.`);
+				setMessage(`Jugador "${name.trim()}" agregado.`);
 				router.refresh();
 			} else {
 				const data = await res.json();
 				setMessage(`Error: ${data.error}`);
 			}
 		} catch {
-			setMessage("Error de conexión.");
+			setMessage("Error de conexion.");
 		} finally {
 			setLoading(false);
 		}
 	}
 
-	/* Delete a player */
 	async function handleDelete(playerId: number, playerName: string) {
-		if (!confirm(`¿Eliminar a ${playerName}? Se eliminarán también todos sus partidos.`)) {
-			return;
-		}
-
+		if (!confirm(`Eliminar a ${playerName}? Se eliminaran todos sus partidos.`)) return;
 		setDeleteLoading(playerId);
 		setMessage("");
 
 		try {
-			const res = await fetch(`/api/players/${playerId}`, {
-				method: "DELETE",
-			});
-
+			const res = await fetch(`/api/players/${playerId}`, { method: "DELETE" });
 			if (res.ok) {
 				setMessage(`Jugador "${playerName}" eliminado.`);
 				router.refresh();
@@ -74,68 +63,49 @@ export default function AdminPlayerManager({
 				setMessage(`Error: ${data.error}`);
 			}
 		} catch {
-			setMessage("Error de conexión.");
+			setMessage("Error de conexion.");
 		} finally {
 			setDeleteLoading(null);
 		}
 	}
 
 	return (
-		<div className="space-y-6">
+		<div style={{ display: "grid", gap: 16 }}>
 			{/* Add player form */}
-			<div className="bg-white rounded-xl shadow-sm p-6">
-				<h2 className="text-lg font-semibold text-gray-800 mb-4">
-					Agregar Jugador
-				</h2>
-
-				<form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
+			<div className="lg-card" style={{ padding: 20 }}>
+				<h2 className="lg-h2">Agregar Jugador</h2>
+				<form onSubmit={handleAdd} style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
 					<input
 						type="text"
 						value={name}
 						onChange={(e) => setName(e.target.value)}
 						placeholder="Nombre del jugador"
-						className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-court-500 focus:border-court-500 outline-none"
+						className="lg-input"
+						style={{ flex: 1, minWidth: 200 }}
 						required
 					/>
-
 					<select
 						value={category}
 						onChange={(e) => setCategory(e.target.value as "M" | "F")}
-						className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-court-500 focus:border-court-500 outline-none"
+						className="lg-select"
 					>
 						<option value="M">Masculino</option>
 						<option value="F">Femenino</option>
 					</select>
-
-					<button
-						type="submit"
-						disabled={loading}
-						className="px-6 py-2 bg-court-700 text-white rounded-lg font-medium hover:bg-court-800 transition-colors disabled:opacity-50 whitespace-nowrap"
-					>
+					<button type="submit" disabled={loading} className="lg-btn lg-btn-primary">
 						{loading ? "Agregando..." : "Agregar"}
 					</button>
 				</form>
-
 				{message && (
-					<p className={`mt-3 text-sm ${message.startsWith("Error") ? "text-red-600" : "text-green-600"}`}>
+					<div className={`lg-message ${message.startsWith("Error") ? "lg-message-error" : "lg-message-success"}`} style={{ marginTop: 10 }}>
 						{message}
-					</p>
+					</div>
 				)}
 			</div>
 
 			{/* Player lists */}
-			<PlayerList
-				title="Masculino"
-				players={initialMasculino}
-				deleteLoading={deleteLoading}
-				onDelete={handleDelete}
-			/>
-			<PlayerList
-				title="Femenino"
-				players={initialFemenino}
-				deleteLoading={deleteLoading}
-				onDelete={handleDelete}
-			/>
+			<PlayerList title="Masculino" players={initialMasculino} deleteLoading={deleteLoading} onDelete={handleDelete} />
+			<PlayerList title="Femenino" players={initialFemenino} deleteLoading={deleteLoading} onDelete={handleDelete} />
 		</div>
 	);
 }
@@ -152,42 +122,38 @@ function PlayerList({
 	onDelete: (id: number, name: string) => void;
 }) {
 	return (
-		<div className="bg-white rounded-xl shadow-sm overflow-hidden">
-			<div className="px-6 py-3 bg-court-50 border-b">
-				<h3 className="font-semibold text-court-800">
-					{title} ({players.length})
-				</h3>
-			</div>
+		<div className="lg-card" style={{ padding: 20 }}>
+			<h2 className="lg-h2">{title} ({players.length})</h2>
 
 			{players.length === 0 ? (
-				<div className="p-6 text-center text-gray-500 text-sm">
-					No hay jugadores en esta categoría.
+				<div className="lg-muted" style={{ textAlign: "center", padding: 16, fontSize: 14 }}>
+					No hay jugadores en esta categoria.
 				</div>
 			) : (
-				<ul className="divide-y divide-gray-100">
+				<div style={{ display: "grid", gap: 8 }}>
 					{players.map((player) => (
-						<li
+						<div
 							key={player.id}
-							className="px-6 py-3 flex items-center justify-between hover:bg-gray-50"
+							className="lg-list-item"
+							style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
 						>
 							<div>
-								<span className="font-medium text-gray-800">
-									{player.name}
-								</span>
-								<span className="text-xs text-gray-400 ml-2">
+								<b>{player.name}</b>
+								<span className="lg-muted" style={{ fontSize: 12, marginLeft: 8 }}>
 									{player.played} jugados / {player.pending} pend.
 								</span>
 							</div>
 							<button
 								onClick={() => onDelete(player.id, player.name)}
 								disabled={deleteLoading === player.id}
-								className="text-red-500 hover:text-red-700 text-sm font-medium disabled:opacity-50 transition-colors"
+								className="lg-pill"
+								style={{ color: "#f87171", fontSize: 12, padding: "6px 10px" }}
 							>
-								{deleteLoading === player.id ? "Eliminando..." : "Eliminar"}
+								{deleteLoading === player.id ? "..." : "Eliminar"}
 							</button>
-						</li>
+						</div>
 					))}
-				</ul>
+				</div>
 			)}
 		</div>
 	);

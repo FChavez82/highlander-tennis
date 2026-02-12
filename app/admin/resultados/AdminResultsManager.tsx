@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Match } from "@/lib/db";
 
 /**
- * Admin results management — enter results for pending matches,
- * edit or delete completed matches.
+ * Admin results management — liquid glass style.
  */
 export default function AdminResultsManager({
 	initialPending,
@@ -17,14 +16,11 @@ export default function AdminResultsManager({
 }) {
 	const router = useRouter();
 	const [message, setMessage] = useState("");
-
-	/* Track which match is being edited (for the inline form) */
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [score, setScore] = useState("");
 	const [datePlayed, setDatePlayed] = useState("");
 	const [saving, setSaving] = useState(false);
 
-	/* Start editing a match — pre-fill form if it already has data */
 	function startEdit(match: Match) {
 		setEditingId(match.id);
 		setScore(match.score || "");
@@ -38,10 +34,8 @@ export default function AdminResultsManager({
 		setDatePlayed("");
 	}
 
-	/* Save a match result */
 	async function handleSave(matchId: number) {
 		if (!score.trim() || !datePlayed) return;
-
 		setSaving(true);
 		setMessage("");
 
@@ -51,9 +45,8 @@ export default function AdminResultsManager({
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ score: score.trim(), date_played: datePlayed }),
 			});
-
 			if (res.ok) {
-				setMessage("Resultado guardado con éxito.");
+				setMessage("Resultado guardado.");
 				cancelEdit();
 				router.refresh();
 			} else {
@@ -61,44 +54,36 @@ export default function AdminResultsManager({
 				setMessage(`Error: ${data.error}`);
 			}
 		} catch {
-			setMessage("Error de conexión.");
+			setMessage("Error de conexion.");
 		} finally {
 			setSaving(false);
 		}
 	}
 
-	/* Reset a match back to pending */
 	async function handleReset(matchId: number) {
-		if (!confirm("¿Borrar el resultado y marcar como pendiente?")) return;
-
+		if (!confirm("Borrar el resultado y marcar como pendiente?")) return;
 		try {
 			const res = await fetch(`/api/matches/${matchId}`, {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ reset: true }),
 			});
-
 			if (res.ok) {
-				setMessage("Resultado borrado, partido marcado como pendiente.");
+				setMessage("Resultado borrado.");
 				router.refresh();
 			} else {
 				const data = await res.json();
 				setMessage(`Error: ${data.error}`);
 			}
 		} catch {
-			setMessage("Error de conexión.");
+			setMessage("Error de conexion.");
 		}
 	}
 
-	/* Delete a match entirely */
 	async function handleDelete(matchId: number) {
-		if (!confirm("¿Eliminar este partido permanentemente?")) return;
-
+		if (!confirm("Eliminar este partido permanentemente?")) return;
 		try {
-			const res = await fetch(`/api/matches/${matchId}`, {
-				method: "DELETE",
-			});
-
+			const res = await fetch(`/api/matches/${matchId}`, { method: "DELETE" });
 			if (res.ok) {
 				setMessage("Partido eliminado.");
 				router.refresh();
@@ -107,221 +92,150 @@ export default function AdminResultsManager({
 				setMessage(`Error: ${data.error}`);
 			}
 		} catch {
-			setMessage("Error de conexión.");
+			setMessage("Error de conexion.");
 		}
 	}
 
 	return (
-		<div className="space-y-6">
+		<div style={{ display: "grid", gap: 16 }}>
 			{message && (
-				<div
-					className={`p-3 rounded-lg text-sm ${
-						message.startsWith("Error")
-							? "bg-red-50 text-red-700"
-							: "bg-green-50 text-green-700"
-					}`}
-				>
+				<div className={`lg-message ${message.startsWith("Error") ? "lg-message-error" : "lg-message-success"}`}>
 					{message}
 				</div>
 			)}
 
-			{/* Pending matches — enter result */}
-			<div className="bg-white rounded-xl shadow-sm overflow-hidden">
-				<div className="px-6 py-3 bg-yellow-50 border-b">
-					<h2 className="font-semibold text-yellow-800">
-						Partidos Pendientes ({initialPending.length})
-					</h2>
-				</div>
+			{/* Pending matches */}
+			<div className="lg-card" style={{ padding: 20 }}>
+				<h2 className="lg-h2" style={{ color: "#fbbf24" }}>
+					Pendientes ({initialPending.length})
+				</h2>
 
 				{initialPending.length === 0 ? (
-					<div className="p-6 text-center text-gray-500 text-sm">
+					<div className="lg-muted" style={{ textAlign: "center", padding: 16, fontSize: 14 }}>
 						No hay partidos pendientes.
 					</div>
 				) : (
-					<ul className="divide-y divide-gray-100">
+					<div style={{ display: "grid", gap: 8 }}>
 						{initialPending.map((match) => (
-							<li key={match.id} className="px-6 py-3">
-								<div className="flex flex-col sm:flex-row sm:items-center gap-2">
-									{/* Match info */}
-									<div className="flex-1 flex items-center gap-2 flex-wrap">
-										<span className="font-medium text-gray-800">
-											{match.player_a_name}
-										</span>
-										<span className="text-gray-400 text-sm">vs</span>
-										<span className="font-medium text-gray-800">
-											{match.player_b_name}
-										</span>
-										<span
-											className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-												match.category === "M"
-													? "bg-blue-100 text-blue-700"
-													: "bg-pink-100 text-pink-700"
-											}`}
-										>
+							<div key={match.id} className="lg-list-item">
+								<div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+									<div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+										<b>{match.player_a_name}</b>
+										<span className="lg-muted" style={{ fontSize: 12 }}>vs</span>
+										<b>{match.player_b_name}</b>
+										<span className={`lg-badge ${match.category === "M" ? "lg-badge-m" : "lg-badge-f"}`}>
 											{match.category === "M" ? "M" : "F"}
 										</span>
 									</div>
-
-									{/* Action button */}
 									{editingId === match.id ? (
-										<button
-											onClick={cancelEdit}
-											className="text-gray-500 hover:text-gray-700 text-sm"
-										>
+										<button onClick={cancelEdit} className="lg-pill" style={{ fontSize: 12, padding: "6px 10px" }}>
 											Cancelar
 										</button>
 									) : (
-										<button
-											onClick={() => startEdit(match)}
-											className="text-court-700 hover:text-court-800 text-sm font-medium"
-										>
+										<button onClick={() => startEdit(match)} className="lg-pill lg-pill-active" style={{ fontSize: 12, padding: "6px 10px" }}>
 											Ingresar Resultado
 										</button>
 									)}
 								</div>
 
-								{/* Inline edit form */}
 								{editingId === match.id && (
-									<div className="mt-3 flex flex-col sm:flex-row gap-2">
+									<div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
 										<input
 											type="text"
 											value={score}
 											onChange={(e) => setScore(e.target.value)}
 											placeholder='Marcador (ej: "6-4, 3-6, [10-7]")'
-											className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-court-500 focus:border-court-500 outline-none"
+											className="lg-input"
+											style={{ flex: 1, minWidth: 180 }}
 										/>
 										<input
 											type="date"
 											value={datePlayed}
 											onChange={(e) => setDatePlayed(e.target.value)}
-											className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-court-500 focus:border-court-500 outline-none"
+											className="lg-input"
+											style={{ width: "auto" }}
 										/>
-										<button
-											onClick={() => handleSave(match.id)}
-											disabled={saving}
-											className="px-4 py-1.5 bg-court-700 text-white rounded-lg text-sm font-medium hover:bg-court-800 transition-colors disabled:opacity-50"
-										>
-											{saving ? "Guardando..." : "Guardar"}
+										<button onClick={() => handleSave(match.id)} disabled={saving} className="lg-btn lg-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }}>
+											{saving ? "..." : "Guardar"}
 										</button>
 									</div>
 								)}
-							</li>
+							</div>
 						))}
-					</ul>
+					</div>
 				)}
 			</div>
 
-			{/* Completed matches — edit/delete */}
-			<div className="bg-white rounded-xl shadow-sm overflow-hidden">
-				<div className="px-6 py-3 bg-green-50 border-b">
-					<h2 className="font-semibold text-green-800">
-						Partidos Jugados ({initialPlayed.length})
-					</h2>
-				</div>
+			{/* Played matches */}
+			<div className="lg-card" style={{ padding: 20 }}>
+				<h2 className="lg-h2" style={{ color: "#4ade80" }}>
+					Jugados ({initialPlayed.length})
+				</h2>
 
 				{initialPlayed.length === 0 ? (
-					<div className="p-6 text-center text-gray-500 text-sm">
+					<div className="lg-muted" style={{ textAlign: "center", padding: 16, fontSize: 14 }}>
 						No hay partidos completados.
 					</div>
 				) : (
-					<ul className="divide-y divide-gray-100">
+					<div style={{ display: "grid", gap: 8 }}>
 						{initialPlayed.map((match) => (
-							<li key={match.id} className="px-6 py-3">
-								<div className="flex flex-col sm:flex-row sm:items-center gap-2">
-									{/* Match info with score */}
-									<div className="flex-1 min-w-0">
-										<div className="flex items-center gap-2 flex-wrap">
-											<span className="font-medium text-gray-800">
-												{match.player_a_name}
-											</span>
-											<span className="text-gray-400 text-sm">vs</span>
-											<span className="font-medium text-gray-800">
-												{match.player_b_name}
-											</span>
-											<span
-												className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-													match.category === "M"
-														? "bg-blue-100 text-blue-700"
-														: "bg-pink-100 text-pink-700"
-												}`}
-											>
+							<div key={match.id} className="lg-list-item">
+								<div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+									<div style={{ flex: 1, minWidth: 0 }}>
+										<div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+											<b>{match.player_a_name}</b>
+											<span className="lg-muted" style={{ fontSize: 12 }}>vs</span>
+											<b>{match.player_b_name}</b>
+											<span className={`lg-badge ${match.category === "M" ? "lg-badge-m" : "lg-badge-f"}`}>
 												{match.category === "M" ? "M" : "F"}
 											</span>
 										</div>
-										<div className="text-sm text-court-700 font-semibold mt-0.5">
+										<div style={{ fontSize: 14, fontWeight: 800, color: "#a5b4fc", marginTop: 4 }}>
 											{match.score}
 											{match.date_played && (
-												<span className="text-gray-400 font-normal ml-2">
-													{new Date(match.date_played).toLocaleDateString("es-ES", {
-														day: "numeric",
-														month: "short",
-														year: "numeric",
-													})}
+												<span className="lg-muted" style={{ fontWeight: 400, fontSize: 12, marginLeft: 8 }}>
+													{new Date(match.date_played).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
 												</span>
 											)}
 										</div>
 									</div>
 
-									{/* Action buttons */}
-									<div className="flex gap-2 shrink-0">
+									<div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
 										{editingId === match.id ? (
-											<button
-												onClick={cancelEdit}
-												className="text-gray-500 hover:text-gray-700 text-sm"
-											>
-												Cancelar
-											</button>
+											<button onClick={cancelEdit} className="lg-pill" style={{ fontSize: 11, padding: "5px 8px" }}>Cancelar</button>
 										) : (
-											<button
-												onClick={() => startEdit(match)}
-												className="text-court-700 hover:text-court-800 text-sm font-medium"
-											>
-												Editar
-											</button>
+											<button onClick={() => startEdit(match)} className="lg-pill" style={{ fontSize: 11, padding: "5px 8px" }}>Editar</button>
 										)}
-										<button
-											onClick={() => handleReset(match.id)}
-											className="text-yellow-600 hover:text-yellow-700 text-sm font-medium"
-										>
-											Resetear
-										</button>
-										<button
-											onClick={() => handleDelete(match.id)}
-											className="text-red-500 hover:text-red-700 text-sm font-medium"
-										>
-											Eliminar
-										</button>
+										<button onClick={() => handleReset(match.id)} className="lg-pill" style={{ fontSize: 11, padding: "5px 8px", color: "#fbbf24" }}>Resetear</button>
+										<button onClick={() => handleDelete(match.id)} className="lg-pill" style={{ fontSize: 11, padding: "5px 8px", color: "#f87171" }}>Eliminar</button>
 									</div>
 								</div>
 
-								{/* Inline edit form for played matches */}
 								{editingId === match.id && (
-									<div className="mt-3 flex flex-col sm:flex-row gap-2">
+									<div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
 										<input
 											type="text"
 											value={score}
 											onChange={(e) => setScore(e.target.value)}
-											placeholder='Marcador (ej: "6-4, 3-6, [10-7]")'
-											className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-court-500 focus:border-court-500 outline-none"
+											placeholder='Marcador'
+											className="lg-input"
+											style={{ flex: 1, minWidth: 180 }}
 										/>
 										<input
 											type="date"
 											value={datePlayed}
 											onChange={(e) => setDatePlayed(e.target.value)}
-											className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-court-500 focus:border-court-500 outline-none"
+											className="lg-input"
+											style={{ width: "auto" }}
 										/>
-										<button
-											onClick={() => handleSave(match.id)}
-											disabled={saving}
-											className="px-4 py-1.5 bg-court-700 text-white rounded-lg text-sm font-medium hover:bg-court-800 transition-colors disabled:opacity-50"
-										>
-											{saving ? "Guardando..." : "Guardar"}
+										<button onClick={() => handleSave(match.id)} disabled={saving} className="lg-btn lg-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }}>
+											{saving ? "..." : "Guardar"}
 										</button>
 									</div>
 								)}
-							</li>
+							</div>
 						))}
-					</ul>
+					</div>
 				)}
 			</div>
 		</div>
