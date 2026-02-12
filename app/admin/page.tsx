@@ -1,11 +1,13 @@
 /**
  * /admin — Dashboard with quick stats, liquid glass style.
  */
+import { unstable_noStore as noStore } from "next/cache";
 import { getStats } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
+	noStore();
 	const stats = await getStats();
 	const totalPlayers = stats.players.M + stats.players.F;
 	const totalMatches = stats.matches.pendiente + stats.matches.jugado;

@@ -1,12 +1,14 @@
 /**
  * /jugadores — Public player list with M/F tabs.
  */
+import { unstable_noStore as noStore } from "next/cache";
 import { getPlayers, type Standing } from "@/lib/db";
 import PlayerTabs from "./PlayerTabs";
 
 export const dynamic = "force-dynamic";
 
 export default async function JugadoresPage() {
+	noStore();
 	const [masculino, femenino] = await Promise.all([
 		getPlayers("M"),
 		getPlayers("F"),

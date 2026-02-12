@@ -1,12 +1,14 @@
 /**
  * /calendario — Full round-robin schedule page.
  */
+import { unstable_noStore as noStore } from "next/cache";
 import { getMatches } from "@/lib/db";
 import CalendarFilter from "./CalendarFilter";
 
 export const dynamic = "force-dynamic";
 
 export default async function CalendarioPage() {
+	noStore();
 	const matches = await getMatches();
 
 	return (
