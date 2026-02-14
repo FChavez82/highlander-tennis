@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMatches, generateRoundRobin } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
-import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS } from "@/lib/constants";
+import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS, type Category } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -42,10 +42,11 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const count = await generateRoundRobin(category);
+		const validCategory = category as Category;
+		const count = await generateRoundRobin(validCategory);
 		return NextResponse.json({
 			success: true,
-			message: `${count} partidos generados para categoría ${CATEGORY_LABELS[category].full}.`,
+			message: `${count} partidos generados para categoría ${CATEGORY_LABELS[validCategory].full}.`,
 			count,
 		});
 	} catch {

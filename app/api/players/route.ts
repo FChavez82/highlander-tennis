@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPlayers, createPlayer } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
-import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS } from "@/lib/constants";
+import { CATEGORY_MALE, CATEGORY_FEMALE, type Category } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const player = await createPlayer(name.trim(), category);
+		const player = await createPlayer(name.trim(), category as Category);
 		return NextResponse.json(player, { status: 201 });
 	} catch {
 		return NextResponse.json(

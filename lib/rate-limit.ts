@@ -17,9 +17,9 @@ const store = new Map<string, RateLimitEntry>();
 const CLEANUP_INTERVAL_MS = 60_000;
 setInterval(() => {
 	const now = Date.now();
-	for (const [key, entry] of store) {
+	store.forEach((entry, key) => {
 		if (now > entry.resetAt) store.delete(key);
-	}
+	});
 }, CLEANUP_INTERVAL_MS);
 
 /**
