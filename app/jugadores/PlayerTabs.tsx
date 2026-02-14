@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import type { Standing } from "@/lib/db";
+import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS, type Category } from "@/lib/constants";
 
 /**
- * Standings table with M/F tabs — liquid glass style.
+ * Standings table with M/F tabs — v0 glass design.
  */
 export default function PlayerTabs({
 	masculino,
@@ -13,59 +14,91 @@ export default function PlayerTabs({
 	masculino: Standing[];
 	femenino: Standing[];
 }) {
-	const [tab, setTab] = useState<"M" | "F">("M");
-	const players = tab === "M" ? masculino : femenino;
+	const [tab, setTab] = useState<Category>(CATEGORY_MALE);
+	const players = tab === CATEGORY_MALE ? masculino : femenino;
+
+	/** Pill base */
+	const pillBase =
+		"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground";
+	/** Pill active */
+	const pillActive =
+		"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30";
 
 	return (
 		<>
 			{/* Tab pills */}
-			<div style={{ display: "flex", gap: 10 }}>
+			<div className="flex gap-2.5">
 				<button
-					onClick={() => setTab("M")}
-					className={`lg-pill ${tab === "M" ? "lg-pill-active" : ""}`}
+					onClick={() => setTab(CATEGORY_MALE)}
+					className={tab === CATEGORY_MALE ? pillActive : pillBase}
 				>
-					Masculino ({masculino.length})
+					{CATEGORY_LABELS[CATEGORY_MALE].full} ({masculino.length})
 				</button>
 				<button
-					onClick={() => setTab("F")}
-					className={`lg-pill ${tab === "F" ? "lg-pill-active" : ""}`}
+					onClick={() => setTab(CATEGORY_FEMALE)}
+					className={tab === CATEGORY_FEMALE ? pillActive : pillBase}
 				>
-					Femenino ({femenino.length})
+					{CATEGORY_LABELS[CATEGORY_FEMALE].full} ({femenino.length})
 				</button>
 			</div>
 
 			{/* Standings table */}
 			{players.length === 0 ? (
-				<div className="lg-card" style={{ padding: 32, textAlign: "center" }}>
-					<span className="lg-muted">No hay jugadores registrados en esta categoria.</span>
+				<div className="glass rounded-2xl p-8 text-center text-muted-foreground">
+					No hay jugadores registrados en esta categoria.
 				</div>
 			) : (
-				<div className="lg-card" style={{ padding: 16 }}>
-					<div style={{ overflowX: "auto" }}>
-						<table className="lg-table">
+				<div className="glass overflow-hidden rounded-2xl">
+					<div className="overflow-x-auto">
+						<table className="w-full">
 							<thead>
-								<tr>
-									<th>#</th>
-									<th>Jugador</th>
-									<th style={{ textAlign: "center" }}>G</th>
-									<th style={{ textAlign: "center" }}>P</th>
-									<th style={{ textAlign: "center" }}>Jugados</th>
-									<th style={{ textAlign: "center" }}>Pend.</th>
+								<tr className="border-b border-[hsl(210_20%_40%/0.12)] bg-[hsl(210_20%_80%/0.03)]">
+									<th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+										#
+									</th>
+									<th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+										Jugador
+									</th>
+									<th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+										G
+									</th>
+									<th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+										P
+									</th>
+									<th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+										Jugados
+									</th>
+									<th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+										Pend.
+									</th>
 								</tr>
 							</thead>
 							<tbody>
 								{players.map((player, i) => (
-									<tr key={player.id}>
-										<td><b>{i + 1}</b></td>
-										<td><b>{player.name}</b></td>
-										<td style={{ textAlign: "center", color: "#4ade80", fontWeight: 700 }}>
+									<tr
+										key={player.id}
+										className="border-b border-[hsl(210_20%_40%/0.06)] transition-colors hover:bg-[hsl(210_20%_80%/0.04)]"
+									>
+										<td className="px-4 py-3">
+											<span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[hsl(210_20%_80%/0.06)] text-xs font-bold text-foreground">
+												{i + 1}
+											</span>
+										</td>
+										<td className="px-4 py-3 font-semibold text-foreground">
+											{player.name}
+										</td>
+										<td className="px-4 py-3 text-center font-bold text-primary">
 											{player.won}
 										</td>
-										<td style={{ textAlign: "center", color: "#f87171", fontWeight: 700 }}>
+										<td className="px-4 py-3 text-center font-bold text-destructive">
 											{player.lost}
 										</td>
-										<td style={{ textAlign: "center" }}>{player.played}</td>
-										<td style={{ textAlign: "center" }}>{player.pending}</td>
+										<td className="px-4 py-3 text-center text-muted-foreground">
+											{player.played}
+										</td>
+										<td className="px-4 py-3 text-center text-muted-foreground">
+											{player.pending}
+										</td>
 									</tr>
 								))}
 							</tbody>
@@ -73,7 +106,7 @@ export default function PlayerTabs({
 					</div>
 
 					{/* Legend */}
-					<div style={{ display: "flex", gap: 16, padding: "8px 14px", fontSize: 11 }} className="lg-muted">
+					<div className="flex gap-4 border-t border-[hsl(210_20%_40%/0.06)] px-4 py-2 text-xs text-muted-foreground">
 						<span>G = Ganados</span>
 						<span>P = Perdidos</span>
 						<span>Pend. = Pendientes</span>

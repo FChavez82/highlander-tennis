@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 /**
- * Admin sub-navigation — liquid glass pills.
+ * Admin sub-navigation — v0 pill style.
  */
 const ADMIN_LINKS = [
 	{ href: "/admin", label: "Dashboard", exact: true },
@@ -12,17 +13,24 @@ const ADMIN_LINKS = [
 	{ href: "/admin/resultados", label: "Resultados", exact: false },
 ];
 
+/** Pill base */
+const pillBase =
+	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground";
+/** Pill active */
+const pillActive =
+	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30";
+
 export default function AdminNav() {
 	const pathname = usePathname();
 	const router = useRouter();
 
 	async function handleLogout() {
-		document.cookie = "admin-session=; path=/; max-age=0";
+		await fetch("/api/admin/logout", { method: "POST" });
 		router.refresh();
 	}
 
 	return (
-		<div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+		<div className="flex flex-wrap items-center gap-2">
 			{ADMIN_LINKS.map((link) => {
 				const isActive = link.exact
 					? pathname === link.href
@@ -32,7 +40,7 @@ export default function AdminNav() {
 					<Link
 						key={link.href}
 						href={link.href}
-						className={`lg-pill ${isActive ? "lg-pill-active" : ""}`}
+						className={isActive ? pillActive : pillBase}
 					>
 						{link.label}
 					</Link>
@@ -40,9 +48,9 @@ export default function AdminNav() {
 			})}
 			<button
 				onClick={handleLogout}
-				className="lg-pill"
-				style={{ color: "#f87171" }}
+				className="inline-flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-destructive transition-colors hover:bg-destructive/20"
 			>
+				<LogOut className="h-3.5 w-3.5" />
 				Salir
 			</button>
 		</div>

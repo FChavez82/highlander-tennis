@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateMatch, deleteMatch, resetMatch } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
+import { validateScore } from "@/lib/constants";
 
 export async function PUT(
 	request: NextRequest,
@@ -47,7 +48,16 @@ export async function PUT(
 			);
 		}
 
-		const match = await updateMatch(matchId, score, date_played);
+		/* Validate score format before saving */
+		const scoreError = validateScore(score.trim());
+		if (scoreError) {
+			return NextResponse.json(
+				{ error: scoreError },
+				{ status: 400 }
+			);
+		}
+
+		const match = await updateMatch(matchId, score.trim(), date_played);
 		return NextResponse.json(match);
 	} catch {
 		return NextResponse.json(

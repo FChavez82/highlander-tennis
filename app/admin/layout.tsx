@@ -3,7 +3,7 @@ import AdminLoginForm from "./AdminLoginForm";
 import AdminNav from "./AdminNav";
 
 /**
- * Admin layout — auth gate with liquid glass styling.
+ * Admin layout — auth gate with v0 glass styling.
  */
 export default async function AdminLayout({
 	children,
@@ -14,17 +14,21 @@ export default async function AdminLayout({
 
 	if (!authed) {
 		return (
-			<div style={{ display: "grid", gap: 16 }}>
-				<h1 className="lg-h1">Panel de Administracion</h1>
+			<div className="grid gap-5">
+				<h1 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground">
+					Panel de Administracion
+				</h1>
 				<AdminLoginForm />
 			</div>
 		);
 	}
 
 	return (
-		<div style={{ display: "grid", gap: 16 }}>
-			<div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-				<h1 className="lg-h1" style={{ margin: 0 }}>Admin</h1>
+		<div className="grid gap-5">
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<h1 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground">
+					Admin
+				</h1>
 				<AdminNav />
 			</div>
 			{children}

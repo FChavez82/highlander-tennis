@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMatches, generateRoundRobin } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
+import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -34,9 +35,9 @@ export async function POST(request: NextRequest) {
 
 		const { category } = await request.json();
 
-		if (category !== "M" && category !== "F") {
+		if (category !== CATEGORY_MALE && category !== CATEGORY_FEMALE) {
 			return NextResponse.json(
-				{ error: "Categoría debe ser 'M' o 'F'." },
+				{ error: `Categoría debe ser '${CATEGORY_MALE}' o '${CATEGORY_FEMALE}'.` },
 				{ status: 400 }
 			);
 		}
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
 		const count = await generateRoundRobin(category);
 		return NextResponse.json({
 			success: true,
-			message: `${count} partidos generados para categoría ${category === "M" ? "Masculino" : "Femenino"}.`,
+			message: `${count} partidos generados para categoría ${CATEGORY_LABELS[category].full}.`,
 			count,
 		});
 	} catch {

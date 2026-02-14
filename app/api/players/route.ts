@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPlayers, createPlayer } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
+import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -41,9 +42,9 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		if (category !== "M" && category !== "F") {
+		if (category !== CATEGORY_MALE && category !== CATEGORY_FEMALE) {
 			return NextResponse.json(
-				{ error: "Categoría debe ser 'M' o 'F'." },
+				{ error: `Categoría debe ser '${CATEGORY_MALE}' o '${CATEGORY_FEMALE}'.` },
 				{ status: 400 }
 			);
 		}

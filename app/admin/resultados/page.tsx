@@ -4,6 +4,7 @@
  */
 import { unstable_noStore as noStore } from "next/cache";
 import { getMatches } from "@/lib/db";
+import { STATUS_PENDING, STATUS_PLAYED } from "@/lib/constants";
 import AdminResultsManager from "./AdminResultsManager";
 
 export const dynamic = "force-dynamic";
@@ -11,8 +12,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminResultadosPage() {
 	noStore();
 	const [pending, played] = await Promise.all([
-		getMatches(undefined, "pendiente"),
-		getMatches(undefined, "jugado"),
+		getMatches(undefined, STATUS_PENDING),
+		getMatches(undefined, STATUS_PLAYED),
 	]);
 
 	return (

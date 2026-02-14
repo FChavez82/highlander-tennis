@@ -4,6 +4,14 @@
  * Uses @vercel/postgres which reads POSTGRES_URL from env automatically.
  */
 import { sql } from "@vercel/postgres";
+import {
+	CATEGORY_MALE,
+	CATEGORY_FEMALE,
+	STATUS_PENDING,
+	STATUS_PLAYED,
+	type Category,
+	type MatchStatus,
+} from "./constants";
 
 /* ================================================================
    Types
@@ -12,7 +20,7 @@ import { sql } from "@vercel/postgres";
 export interface Player {
 	id: number;
 	name: string;
-	category: "M" | "F";
+	category: Category;
 	created_at: string;
 }
 
@@ -20,8 +28,8 @@ export interface Match {
 	id: number;
 	player_a_id: number;
 	player_b_id: number;
-	category: "M" | "F";
-	status: "pendiente" | "jugado";
+	category: Category;
+	status: MatchStatus;
 	score: string | null;
 	date_played: string | null;
 	created_at: string;
@@ -33,7 +41,7 @@ export interface Match {
 export interface Standing {
 	id: number;
 	name: string;
-	category: "M" | "F";
+	category: Category;
 	played: number;
 	won: number;
 	lost: number;
@@ -165,7 +173,7 @@ function determineWinner(
  */
 export async function createPlayer(
 	name: string,
-	category: "M" | "F"
+	category: Category
 ): Promise<Player> {
 	/* Insert the new player */
 	const { rows } = await sql`
@@ -209,58 +217,15 @@ export async function deletePlayer(id: number): Promise<void> {
    ================================================================ */
 
 /**
- * Get matches with player names joined, optionally filtered.
+ * Get matches with player names joined, optionally filtered by category and/or status.
+ *
+ * Uses a single query with conditional WHERE clauses:
+ * when a filter param is NULL the corresponding condition is skipped.
  */
 export async function getMatches(
 	category?: string,
 	status?: string
 ): Promise<Match[]> {
-	/* Build WHERE conditions dynamically */
-	if (category && status) {
-		const { rows } = await sql`
-			SELECT
-				m.*,
-				pa.name AS player_a_name,
-				pb.name AS player_b_name
-			FROM matches m
-			JOIN players pa ON pa.id = m.player_a_id
-			JOIN players pb ON pb.id = m.player_b_id
-			WHERE m.category = ${category} AND m.status = ${status}
-			ORDER BY m.date_played DESC NULLS LAST, m.id;
-		`;
-		return rows as Match[];
-	}
-
-	if (category) {
-		const { rows } = await sql`
-			SELECT
-				m.*,
-				pa.name AS player_a_name,
-				pb.name AS player_b_name
-			FROM matches m
-			JOIN players pa ON pa.id = m.player_a_id
-			JOIN players pb ON pb.id = m.player_b_id
-			WHERE m.category = ${category}
-			ORDER BY m.date_played DESC NULLS LAST, m.id;
-		`;
-		return rows as Match[];
-	}
-
-	if (status) {
-		const { rows } = await sql`
-			SELECT
-				m.*,
-				pa.name AS player_a_name,
-				pb.name AS player_b_name
-			FROM matches m
-			JOIN players pa ON pa.id = m.player_a_id
-			JOIN players pb ON pb.id = m.player_b_id
-			WHERE m.status = ${status}
-			ORDER BY m.date_played DESC NULLS LAST, m.id;
-		`;
-		return rows as Match[];
-	}
-
 	const { rows } = await sql`
 		SELECT
 			m.*,
@@ -269,6 +234,8 @@ export async function getMatches(
 		FROM matches m
 		JOIN players pa ON pa.id = m.player_a_id
 		JOIN players pb ON pb.id = m.player_b_id
+		WHERE (${category ?? null}::text IS NULL OR m.category = ${category ?? null})
+		  AND (${status ?? null}::text IS NULL OR m.status = ${status ?? null})
 		ORDER BY m.date_played DESC NULLS LAST, m.id;
 	`;
 	return rows as Match[];
@@ -320,7 +287,7 @@ export async function deleteMatch(id: number): Promise<void> {
  * This deletes ALL existing matches for the category first,
  * then creates N*(N-1)/2 pairings.
  */
-export async function generateRoundRobin(category: "M" | "F"): Promise<number> {
+export async function generateRoundRobin(category: Category): Promise<number> {
 	/* Get all players in this category */
 	const { rows: players } = await sql`
 		SELECT id FROM players
@@ -369,12 +336,12 @@ export async function getStats() {
 
 	return {
 		players: {
-			M: playerCounts.find((r) => r.category === "M")?.count ?? 0,
-			F: playerCounts.find((r) => r.category === "F")?.count ?? 0,
+			[CATEGORY_MALE]: playerCounts.find((r) => r.category === CATEGORY_MALE)?.count ?? 0,
+			[CATEGORY_FEMALE]: playerCounts.find((r) => r.category === CATEGORY_FEMALE)?.count ?? 0,
 		},
 		matches: {
-			pendiente: matchCounts.find((r) => r.status === "pendiente")?.count ?? 0,
-			jugado: matchCounts.find((r) => r.status === "jugado")?.count ?? 0,
+			[STATUS_PENDING]: matchCounts.find((r) => r.status === STATUS_PENDING)?.count ?? 0,
+			[STATUS_PLAYED]: matchCounts.find((r) => r.status === STATUS_PLAYED)?.count ?? 0,
 		},
 	};
 }

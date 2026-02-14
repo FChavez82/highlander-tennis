@@ -2,13 +2,25 @@
 
 import { useState } from "react";
 import type { Match } from "@/lib/db";
+import {
+	CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS,
+	STATUS_PENDING, STATUS_PLAYED, STATUS_LABELS,
+	type Category, type MatchStatus,
+} from "@/lib/constants";
+
+/** Pill base */
+const pillBase =
+	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground";
+/** Pill active */
+const pillActive =
+	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30";
 
 /**
- * Calendar filter and display — liquid glass style.
+ * Calendar filter and display — v0 glass design.
  */
 export default function CalendarFilter({ matches }: { matches: Match[] }) {
-	const [catFilter, setCatFilter] = useState<"all" | "M" | "F">("all");
-	const [statusFilter, setStatusFilter] = useState<"all" | "pendiente" | "jugado">("all");
+	const [catFilter, setCatFilter] = useState<"all" | Category>("all");
+	const [statusFilter, setStatusFilter] = useState<"all" | MatchStatus>("all");
 
 	const filtered = matches.filter((m) => {
 		if (catFilter !== "all" && m.category !== catFilter) return false;
@@ -16,39 +28,39 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 		return true;
 	});
 
-	const pending = filtered.filter((m) => m.status === "pendiente");
-	const played = filtered.filter((m) => m.status === "jugado");
+	const pending = filtered.filter((m) => m.status === STATUS_PENDING);
+	const played = filtered.filter((m) => m.status === STATUS_PLAYED);
 
 	return (
 		<>
 			{/* Filters */}
-			<div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-				<div style={{ display: "flex", gap: 8 }}>
-					{(["all", "M", "F"] as const).map((f) => (
+			<div className="flex flex-wrap gap-4">
+				<div className="flex gap-2">
+					{(["all", CATEGORY_MALE, CATEGORY_FEMALE] as const).map((f) => (
 						<button
 							key={f}
 							onClick={() => setCatFilter(f)}
-							className={`lg-pill ${catFilter === f ? "lg-pill-active" : ""}`}
+							className={catFilter === f ? pillActive : pillBase}
 						>
-							{f === "all" ? "Todas" : f === "M" ? "Masc" : "Fem"}
+							{f === "all" ? "Todas" : CATEGORY_LABELS[f].short}
 						</button>
 					))}
 				</div>
-				<div style={{ display: "flex", gap: 8 }}>
-					{(["all", "pendiente", "jugado"] as const).map((f) => (
+				<div className="flex gap-2">
+					{(["all", STATUS_PENDING, STATUS_PLAYED] as const).map((f) => (
 						<button
 							key={f}
 							onClick={() => setStatusFilter(f)}
-							className={`lg-pill ${statusFilter === f ? "lg-pill-active" : ""}`}
+							className={statusFilter === f ? pillActive : pillBase}
 						>
-							{f === "all" ? "Todos" : f === "pendiente" ? "Pendientes" : "Jugados"}
+							{f === "all" ? "Todos" : STATUS_LABELS[f].full}
 						</button>
 					))}
 				</div>
 			</div>
 
 			{/* Summary */}
-			<p className="lg-muted" style={{ fontSize: 13, margin: 0 }}>
+			<p className="text-sm text-muted-foreground">
 				{filtered.length} partido{filtered.length !== 1 ? "s" : ""} &middot;{" "}
 				{pending.length} pendiente{pending.length !== 1 ? "s" : ""} &middot;{" "}
 				{played.length} jugado{played.length !== 1 ? "s" : ""}
@@ -56,14 +68,16 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 
 			{/* Match list */}
 			{filtered.length === 0 ? (
-				<div className="lg-card" style={{ padding: 32, textAlign: "center" }}>
-					<span className="lg-muted">No hay partidos para mostrar.</span>
+				<div className="glass rounded-2xl p-8 text-center text-muted-foreground">
+					No hay partidos para mostrar.
 				</div>
 			) : (
-				<div style={{ display: "grid", gap: 10 }}>
+				<div className="grid gap-3">
 					{pending.length > 0 && (
 						<>
-							<div className="lg-kicker" style={{ marginTop: 4 }}>Pendientes</div>
+							<p className="mt-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+								Pendientes
+							</p>
 							{pending.map((match) => (
 								<MatchRow key={match.id} match={match} />
 							))}
@@ -71,7 +85,9 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 					)}
 					{played.length > 0 && (
 						<>
-							<div className="lg-kicker" style={{ marginTop: 8 }}>Jugados</div>
+							<p className="mt-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+								Jugados
+							</p>
 							{played.map((match) => (
 								<MatchRow key={match.id} match={match} />
 							))}
@@ -85,31 +101,43 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 
 function MatchRow({ match }: { match: Match }) {
 	return (
-		<div className="lg-list-item" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+		<div className="glass-light flex flex-wrap items-center gap-2.5 rounded-xl p-3 transition-shadow hover:glass-glow-primary">
 			{/* Players */}
-			<div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-				<b>{match.player_a_name}</b>
-				<span className="lg-muted" style={{ fontSize: 12 }}>vs</span>
-				<b>{match.player_b_name}</b>
+			<div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+				<b className="text-foreground">{match.player_a_name}</b>
+				<span className="text-xs text-muted-foreground">vs</span>
+				<b className="text-foreground">{match.player_b_name}</b>
 			</div>
 
 			{/* Right side */}
-			<div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-				{match.status === "jugado" ? (
+			<div className="flex flex-shrink-0 items-center gap-2">
+				{match.status === STATUS_PLAYED ? (
 					<>
-						<span style={{ fontWeight: 800, color: "#a5b4fc" }}>{match.score}</span>
+						<span className="font-mono text-sm font-extrabold text-primary">
+							{match.score}
+						</span>
 						{match.date_played && (
-							<span className="lg-muted" style={{ fontSize: 12 }}>
+							<span className="text-xs text-muted-foreground">
 								{new Date(match.date_played).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
 							</span>
 						)}
-						<span className="lg-badge lg-badge-played">Jugado</span>
+						<span className="inline-flex rounded-md bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/25">
+							Jugado
+						</span>
 					</>
 				) : (
-					<span className="lg-badge lg-badge-pending">Pendiente</span>
+					<span className="inline-flex rounded-md bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent ring-1 ring-accent/25">
+						Pendiente
+					</span>
 				)}
-				<span className={`lg-badge ${match.category === "M" ? "lg-badge-m" : "lg-badge-f"}`}>
-					{match.category === "M" ? "M" : "F"}
+				<span
+					className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${
+						match.category === CATEGORY_MALE
+							? "bg-primary/15 text-primary ring-primary/25"
+							: "bg-accent/15 text-accent ring-accent/25"
+					}`}
+				>
+					{match.category}
 				</span>
 			</div>
 		</div>

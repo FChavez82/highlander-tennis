@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus, Trash2 } from "lucide-react";
 import type { Standing } from "@/lib/db";
+import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS, type Category } from "@/lib/constants";
 
 /**
- * Admin player management — liquid glass style.
+ * Admin player management — v0 glass design.
  */
 export default function AdminPlayerManager({
 	initialMasculino,
@@ -16,7 +18,7 @@ export default function AdminPlayerManager({
 }) {
 	const router = useRouter();
 	const [name, setName] = useState("");
-	const [category, setCategory] = useState<"M" | "F">("M");
+	const [category, setCategory] = useState<Category>(CATEGORY_MALE);
 	const [loading, setLoading] = useState(false);
 	const [deleteLoading, setDeleteLoading] = useState<number | null>(null);
 	const [message, setMessage] = useState("");
@@ -70,42 +72,52 @@ export default function AdminPlayerManager({
 	}
 
 	return (
-		<div style={{ display: "grid", gap: 16 }}>
+		<div className="grid gap-5">
 			{/* Add player form */}
-			<div className="lg-card" style={{ padding: 20 }}>
-				<h2 className="lg-h2">Agregar Jugador</h2>
-				<form onSubmit={handleAdd} style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+			<div className="glass rounded-2xl p-5">
+				<h2 className="mb-3 text-lg font-bold text-foreground">Agregar Jugador</h2>
+				<form onSubmit={handleAdd} className="flex flex-wrap gap-2.5">
 					<input
 						type="text"
 						value={name}
 						onChange={(e) => setName(e.target.value)}
 						placeholder="Nombre del jugador"
-						className="lg-input"
-						style={{ flex: 1, minWidth: 200 }}
+						className="min-w-[200px] flex-1 rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
 						required
 					/>
 					<select
 						value={category}
-						onChange={(e) => setCategory(e.target.value as "M" | "F")}
-						className="lg-select"
+						onChange={(e) => setCategory(e.target.value as Category)}
+						className="cursor-pointer rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] px-4 py-2.5 text-sm text-foreground outline-none"
 					>
-						<option value="M">Masculino</option>
-						<option value="F">Femenino</option>
+						<option value={CATEGORY_MALE}>{CATEGORY_LABELS[CATEGORY_MALE].full}</option>
+						<option value={CATEGORY_FEMALE}>{CATEGORY_LABELS[CATEGORY_FEMALE].full}</option>
 					</select>
-					<button type="submit" disabled={loading} className="lg-btn lg-btn-primary">
+					<button
+						type="submit"
+						disabled={loading}
+						className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-opacity disabled:opacity-50"
+					>
+						<Plus className="h-4 w-4" />
 						{loading ? "Agregando..." : "Agregar"}
 					</button>
 				</form>
 				{message && (
-					<div className={`lg-message ${message.startsWith("Error") ? "lg-message-error" : "lg-message-success"}`} style={{ marginTop: 10 }}>
+					<div
+						className={`mt-3 rounded-lg border px-3 py-2.5 text-sm ${
+							message.startsWith("Error")
+								? "border-destructive/25 bg-destructive/10 text-destructive"
+								: "border-primary/25 bg-primary/10 text-primary"
+						}`}
+					>
 						{message}
 					</div>
 				)}
 			</div>
 
 			{/* Player lists */}
-			<PlayerList title="Masculino" players={initialMasculino} deleteLoading={deleteLoading} onDelete={handleDelete} />
-			<PlayerList title="Femenino" players={initialFemenino} deleteLoading={deleteLoading} onDelete={handleDelete} />
+			<PlayerList title={CATEGORY_LABELS[CATEGORY_MALE].full} players={initialMasculino} deleteLoading={deleteLoading} onDelete={handleDelete} />
+			<PlayerList title={CATEGORY_LABELS[CATEGORY_FEMALE].full} players={initialFemenino} deleteLoading={deleteLoading} onDelete={handleDelete} />
 		</div>
 	);
 }
@@ -122,33 +134,32 @@ function PlayerList({
 	onDelete: (id: number, name: string) => void;
 }) {
 	return (
-		<div className="lg-card" style={{ padding: 20 }}>
-			<h2 className="lg-h2">{title} ({players.length})</h2>
+		<div className="glass rounded-2xl p-5">
+			<h2 className="mb-3 text-lg font-bold text-foreground">{title} ({players.length})</h2>
 
 			{players.length === 0 ? (
-				<div className="lg-muted" style={{ textAlign: "center", padding: 16, fontSize: 14 }}>
+				<div className="p-4 text-center text-sm text-muted-foreground">
 					No hay jugadores en esta categoria.
 				</div>
 			) : (
-				<div style={{ display: "grid", gap: 8 }}>
+				<div className="grid gap-2">
 					{players.map((player) => (
 						<div
 							key={player.id}
-							className="lg-list-item"
-							style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+							className="glass-light flex items-center justify-between rounded-xl p-3 transition-shadow hover:glass-glow-primary"
 						>
 							<div>
-								<b>{player.name}</b>
-								<span className="lg-muted" style={{ fontSize: 12, marginLeft: 8 }}>
+								<b className="text-foreground">{player.name}</b>
+								<span className="ml-2 text-xs text-muted-foreground">
 									{player.played} jugados / {player.pending} pend.
 								</span>
 							</div>
 							<button
 								onClick={() => onDelete(player.id, player.name)}
 								disabled={deleteLoading === player.id}
-								className="lg-pill"
-								style={{ color: "#f87171", fontSize: 12, padding: "6px 10px" }}
+								className="inline-flex items-center gap-1 rounded-lg bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50"
 							>
+								<Trash2 className="h-3.5 w-3.5" />
 								{deleteLoading === player.id ? "..." : "Eliminar"}
 							</button>
 						</div>
