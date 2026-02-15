@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Edit, RotateCcw, Trash2, X } from "lucide-react";
 import type { Match } from "@/lib/db";
-import { CATEGORY_MALE, CATEGORY_LABELS } from "@/lib/constants";
+import { CATEGORY_MALE, CATEGORY_LABELS, categoryBadgeClass } from "@/lib/constants";
 
 /* ── Per-set score entry state ── */
 type SetScores = {
@@ -51,6 +51,26 @@ function buildScore(s: SetScores): string {
 		parts.push(s.isSuperTiebreak ? `[${s.s3a}-${s.s3b}]` : `${s.s3a}-${s.s3b}`);
 	}
 	return parts.join(", ");
+}
+
+/** Parsed set for score display grid */
+type ParsedSet = { a: number; b: number; isTiebreak: boolean };
+
+/** Parse a score string like "6-4, 3-6, [10-7]" into individual sets for display */
+function parseSetsForDisplay(score: string): ParsedSet[] {
+	if (!score) return [];
+	return score.split(",").map((s) => {
+		const trimmed = s.trim();
+		const tbMatch = trimmed.match(/\[(\d+)-(\d+)\]/);
+		if (tbMatch) {
+			return { a: parseInt(tbMatch[1]), b: parseInt(tbMatch[2]), isTiebreak: true };
+		}
+		const parts = trimmed.split("-").map((n) => parseInt(n.trim()));
+		if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+			return { a: parts[0], b: parts[1], isTiebreak: false };
+		}
+		return null;
+	}).filter((s): s is ParsedSet => s !== null);
 }
 
 /** Glass input style for score boxes */
@@ -199,11 +219,7 @@ export default function AdminResultsManager({
 										<span className="text-xs text-muted-foreground">vs</span>
 										<b className="text-foreground">{match.player_b_name}</b>
 										<span
-											className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${
-												match.category === CATEGORY_MALE
-													? "bg-primary/15 text-primary ring-primary/25"
-													: "bg-accent/15 text-accent ring-accent/25"
-											}`}
+											className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
 										>
 											{CATEGORY_LABELS[match.category].short}
 										</span>
@@ -258,36 +274,24 @@ export default function AdminResultsManager({
 					</div>
 				) : (
 					<div className="grid gap-2">
-						{initialPlayed.map((match) => (
+						{initialPlayed.map((match) => {
+							const displaySets = parseSetsForDisplay(match.score || "");
+							return (
 							<div key={match.id} className="glass-light rounded-xl p-3">
-								<div className="flex flex-wrap items-center gap-2">
-									<div className="min-w-0 flex-1">
-										<div className="flex flex-wrap items-center gap-2">
-											<b className="text-foreground">{match.player_a_name}</b>
-											<span className="text-xs text-muted-foreground">vs</span>
-											<b className="text-foreground">{match.player_b_name}</b>
-											<span
-												className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${
-													match.category === CATEGORY_MALE
-														? "bg-primary/15 text-primary ring-primary/25"
-														: "bg-accent/15 text-accent ring-accent/25"
-												}`}
-											>
-												{CATEGORY_LABELS[match.category].short}
+								{/* Top row: badges + date + action buttons */}
+								<div className="mb-2.5 flex items-center justify-between gap-2">
+									<div className="flex items-center gap-2">
+										<span
+											className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
+										>
+											{CATEGORY_LABELS[match.category].short}
+										</span>
+										{match.date_played && (
+											<span className="text-xs text-muted-foreground">
+												{new Date(match.date_played).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
 											</span>
-										</div>
-										<div className="mt-1">
-											<span className="font-mono text-sm font-extrabold text-primary">
-												{match.score}
-											</span>
-											{match.date_played && (
-												<span className="ml-2 text-xs text-muted-foreground">
-													{new Date(match.date_played).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
-												</span>
-											)}
-										</div>
+										)}
 									</div>
-
 									<div className="flex flex-shrink-0 gap-1.5">
 										{editingId === match.id ? (
 											<button
@@ -319,6 +323,53 @@ export default function AdminResultsManager({
 									</div>
 								</div>
 
+								{/* Score grid */}
+								<div className="overflow-x-auto">
+									<div
+										className="grid items-center gap-x-2 gap-y-1.5"
+										style={{ gridTemplateColumns: `1fr repeat(${displaySets.length}, auto)` }}
+									>
+										<div />
+										{displaySets.map((s, i) => (
+											<div key={i} className="text-center text-[10px] font-semibold text-muted-foreground">
+												{s.isTiebreak ? "S. Tie" : `Set ${i + 1}`}
+											</div>
+										))}
+
+										<div className="truncate text-sm font-semibold text-foreground">
+											{match.player_a_name}
+										</div>
+										{displaySets.map((s, i) => (
+											<div
+												key={i}
+												className={`flex h-9 w-9 items-center justify-center rounded-md text-sm font-bold ${
+													s.a > s.b
+														? "bg-primary/15 text-primary ring-1 ring-primary/25"
+														: "bg-[hsl(210_20%_80%/0.05)] text-muted-foreground"
+												}`}
+											>
+												{s.a}
+											</div>
+										))}
+
+										<div className="truncate text-sm font-semibold text-foreground">
+											{match.player_b_name}
+										</div>
+										{displaySets.map((s, i) => (
+											<div
+												key={i}
+												className={`flex h-9 w-9 items-center justify-center rounded-md text-sm font-bold ${
+													s.b > s.a
+														? "bg-primary/15 text-primary ring-1 ring-primary/25"
+														: "bg-[hsl(210_20%_80%/0.05)] text-muted-foreground"
+												}`}
+											>
+												{s.b}
+											</div>
+										))}
+									</div>
+								</div>
+
 								{editingId === match.id && (
 									<ScoreEditor
 										sets={sets}
@@ -333,7 +384,7 @@ export default function AdminResultsManager({
 									/>
 								)}
 							</div>
-						))}
+						)})}
 					</div>
 				)}
 			</div>

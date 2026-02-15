@@ -5,6 +5,7 @@ const config: Config = {
 		"./pages/**/*.{js,ts,jsx,tsx,mdx}",
 		"./components/**/*.{js,ts,jsx,tsx,mdx}",
 		"./app/**/*.{js,ts,jsx,tsx,mdx}",
+		"./lib/**/*.{js,ts}",
 	],
 	theme: {
 		extend: {
@@ -42,6 +43,8 @@ const config: Config = {
 				border: "hsl(var(--border))",
 				input: "hsl(var(--input))",
 				ring: "hsl(var(--ring))",
+				"cat-male": "hsl(var(--cat-male))",
+				"cat-female": "hsl(var(--cat-female))",
 			},
 			fontFamily: {
 				sans: ["var(--font-inter)", "system-ui", "sans-serif"],

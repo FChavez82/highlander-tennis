@@ -45,6 +45,10 @@
 		--input: 210 15% 20%;
 		--ring: 160 65% 48%;
 
+		/* Category colors — blue for Masc, pink for Fem */
+		--cat-male: 207 90% 61%;
+		--cat-female: 330 81% 60%;
+
 		/* Radius */
 		--radius: 0.75rem;
 	}

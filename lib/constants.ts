@@ -71,6 +71,18 @@ export function validateScore(score: string): string | null {
 	return null;
 }
 
+/* ── Category badge styling ── */
+
+/**
+ * Returns Tailwind classes for a category badge.
+ * Male → blue (cat-male), Female → pink (cat-female).
+ */
+export function categoryBadgeClass(category: Category): string {
+	return category === CATEGORY_MALE
+		? "bg-cat-male/15 text-cat-male ring-cat-male/25"
+		: "bg-cat-female/15 text-cat-female ring-cat-female/25";
+}
+
 /* ── Tournament info (easy to update when final names/dates are confirmed) ── */
 export const TOURNAMENT_NAME = "Colinas Invitational";
 export const TOURNAMENT_DATES = "6 de Abril – 30 de Junio, 2026";
