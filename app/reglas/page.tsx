@@ -17,7 +17,7 @@ export default function ReglasPage() {
 			</h1>
 
 			<section className="glass rounded-2xl p-5 transition-shadow hover:glass-glow-primary">
-				<h2 className="mb-3 text-xl font-bold text-foreground">Formato General</h2>
+				<h2 className="mb-3 text-xl font-bold uppercase tracking-wide text-foreground">Formato General</h2>
 				<div className="grid gap-2.5">
 					{[
 						["Round-Robin", "Todos contra todos dentro de cada categoria."],
@@ -33,7 +33,7 @@ export default function ReglasPage() {
 			</section>
 
 			<section className="glass rounded-2xl p-5 transition-shadow hover:glass-glow-primary">
-				<h2 className="mb-3 text-xl font-bold text-foreground">Formato de Partidos</h2>
+				<h2 className="mb-3 text-xl font-bold uppercase tracking-wide text-foreground">Formato de Partidos</h2>
 				<div className="grid gap-2.5">
 					{[
 						["Sets", "Los partidos se juegan a 2 sets."],
@@ -53,7 +53,7 @@ export default function ReglasPage() {
 
 			<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 				<section className="glass rounded-2xl p-5 transition-shadow hover:glass-glow-primary">
-					<h2 className="mb-3 text-xl font-bold text-foreground">Clasificacion</h2>
+					<h2 className="mb-3 text-xl font-bold uppercase tracking-wide text-foreground">Clasificacion</h2>
 					<div className="grid gap-2.5">
 						{[
 							["Victoria", "1 punto."],
@@ -70,7 +70,7 @@ export default function ReglasPage() {
 				</section>
 
 				<section className="glass rounded-2xl p-5 transition-shadow hover:glass-glow-primary">
-					<h2 className="mb-3 text-xl font-bold text-foreground">Reglas de Conducta</h2>
+					<h2 className="mb-3 text-xl font-bold uppercase tracking-wide text-foreground">Reglas de Conducta</h2>
 					<div className="grid gap-2.5">
 						{[
 							["Deportividad", "Se espera respeto entre todos los participantes."],
