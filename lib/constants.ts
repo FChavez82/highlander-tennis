@@ -14,6 +14,37 @@ export const CATEGORY_LABELS: Record<Category, { full: string; short: string }> 
 	[CATEGORY_FEMALE]: { full: "Femenino", short: "Fem" },
 };
 
+/* ── Tournament phases ── */
+export const PHASE_ROUND_ROBIN = "round_robin" as const;
+export const PHASE_BRACKET = "bracket" as const;
+export type Phase = typeof PHASE_ROUND_ROBIN | typeof PHASE_BRACKET;
+
+/** Human-readable labels for each phase */
+export const PHASE_LABELS: Record<Phase, { full: string; short: string }> = {
+	[PHASE_ROUND_ROBIN]: { full: "Fase 1 — Round Robin", short: "Fase 1" },
+	[PHASE_BRACKET]: { full: "Fase 2 — Eliminación", short: "Fase 2" },
+};
+
+/* ── Bracket configuration ── */
+
+/** Number of players that qualify from each category into the bracket */
+export const BRACKET_QUALIFIERS = 4;
+
+/** Bracket round identifiers and labels */
+export const BRACKET_ROUND_SEMIFINAL = "semifinal" as const;
+export const BRACKET_ROUND_FINAL = "final" as const;
+export const BRACKET_ROUND_THIRD_PLACE = "third_place" as const;
+export type BracketRound =
+	| typeof BRACKET_ROUND_SEMIFINAL
+	| typeof BRACKET_ROUND_FINAL
+	| typeof BRACKET_ROUND_THIRD_PLACE;
+
+export const BRACKET_ROUND_LABELS: Record<BracketRound, string> = {
+	[BRACKET_ROUND_SEMIFINAL]: "Semifinal",
+	[BRACKET_ROUND_FINAL]: "Final",
+	[BRACKET_ROUND_THIRD_PLACE]: "3er Puesto",
+};
+
 /* ── Match statuses ── */
 export const STATUS_PENDING = "pendiente" as const;
 export const STATUS_PLAYED = "jugado" as const;

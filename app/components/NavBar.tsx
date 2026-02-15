@@ -15,6 +15,7 @@ const NAV_LINKS = [
 	{ href: "/", label: "Inicio" },
 	{ href: "/reglas", label: "Reglas" },
 	{ href: "/jugadores", label: "Jugadores" },
+	{ href: "/clasificacion", label: "Clasificacion" },
 	{ href: "/resultados", label: "Resultados" },
 	{ href: "/calendario", label: "Calendario" },
 ];

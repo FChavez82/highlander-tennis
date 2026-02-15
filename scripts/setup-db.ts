@@ -38,6 +38,36 @@ async function setupDatabase() {
 	`;
 	console.log("✅ Tabla 'matches' creada.");
 
+	/* ── Phase & bracket columns (Phase 2 — elimination brackets) ── */
+	await sql`
+		DO $$
+		BEGIN
+			/* Add phase column if it doesn't exist */
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'matches' AND column_name = 'phase'
+			) THEN
+				ALTER TABLE matches
+					ADD COLUMN phase VARCHAR(15) DEFAULT 'round_robin';
+			END IF;
+
+			/* Add bracket_round column if it doesn't exist */
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'matches' AND column_name = 'bracket_round'
+			) THEN
+				ALTER TABLE matches
+					ADD COLUMN bracket_round VARCHAR(15);
+			END IF;
+
+			/* Make player columns nullable for bracket placeholder matches (final/3rd place) */
+			ALTER TABLE matches ALTER COLUMN player_a_id DROP NOT NULL;
+			ALTER TABLE matches ALTER COLUMN player_b_id DROP NOT NULL;
+		END
+		$$;
+	`;
+	console.log("✅ Columnas 'phase' y 'bracket_round' agregadas a 'matches'.");
+
 	console.log("\n🎾 Base de datos lista.");
 }
 

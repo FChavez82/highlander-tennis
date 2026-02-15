@@ -3,10 +3,11 @@
  *
  * PUT    — Update match result (requires admin session)
  *          Body: { score: string, date_played: string }
+ *          After updating a bracket match, auto-advances winners/losers to the next round.
  * DELETE — Delete a match (requires admin session)
  */
 import { NextRequest, NextResponse } from "next/server";
-import { updateMatch, deleteMatch, resetMatch } from "@/lib/db";
+import { updateMatch, deleteMatch, resetMatch, advanceBracket } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { validateScore } from "@/lib/constants";
 
@@ -58,6 +59,14 @@ export async function PUT(
 		}
 
 		const match = await updateMatch(matchId, score.trim(), date_played);
+
+		/* Auto-advance bracket: if this was a semifinal, populate final + 3rd place */
+		try {
+			await advanceBracket(matchId);
+		} catch {
+			/* Non-fatal: bracket advance can fail if not all semis are done yet */
+		}
+
 		return NextResponse.json(match);
 	} catch {
 		return NextResponse.json(
