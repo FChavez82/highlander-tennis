@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Trophy, Flame } from "lucide-react";
 import type { Standing } from "@/lib/db";
 import {
+	CATEGORY_MALE,
 	CATEGORY_LABELS,
 	BRACKET_QUALIFIERS,
 	categoryBadgeClass,
@@ -123,9 +124,9 @@ export default function StandingsTable({
 												{player.name}
 											</Link>
 											<span
-												className={`inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none ring-1 ${categoryBadgeClass(player.category)}`}
+												className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none ring-1 ${categoryBadgeClass(player.category)}`}
 											>
-												{CATEGORY_LABELS[player.category].short}
+																							{CATEGORY_LABELS[player.category].full}
 											</span>
 											{rank <= BRACKET_QUALIFIERS && (
 												<span className="inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase leading-none text-emerald-400 ring-1 ring-emerald-500/25">

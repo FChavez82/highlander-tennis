@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Trophy } from "lucide-react";
+import { Trophy, Clock, CheckCircle } from "lucide-react";
 import type { Match } from "@/lib/db";
 import {
 	CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS,
@@ -14,9 +14,9 @@ import { safeDate } from "@/lib/utils";
 
 /* ── Shared pill styles ── */
 const pillBase =
-	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground";
+	"inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground glass-interactive";
 const pillActive =
-	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30";
+	"inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30 glass-interactive";
 
 /* ── Spanish day headers (Monday-first) ── */
 const DAY_HEADERS = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
@@ -179,7 +179,7 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 							aria-pressed={catFilter === f}
 							className={catFilter === f ? pillActive : pillBase}
 						>
-							{f === "all" ? "Todas" : CATEGORY_LABELS[f].short}
+{f === "all" ? "Todas" : CATEGORY_LABELS[f].full}
 						</button>
 					))}
 				</div>
@@ -191,6 +191,8 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 							aria-pressed={statusFilter === f}
 							className={statusFilter === f ? pillActive : pillBase}
 						>
+							{f === STATUS_PENDING && <Clock className="h-3.5 w-3.5" />}
+							{f === STATUS_PLAYED && <CheckCircle className="h-3.5 w-3.5" />}
 							{f === "all" ? "Todos" : STATUS_LABELS[f].full}
 						</button>
 					))}
@@ -210,7 +212,7 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 				<div className="mb-4 flex items-center justify-between">
 					<button
 						onClick={prevMonth}
-						className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[hsl(210_20%_80%/0.08)] hover:text-foreground"
+						className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[hsl(210_20%_80%/0.08)] hover:text-foreground glass-interactive"
 						aria-label="Mes anterior"
 					>
 						<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -222,7 +224,7 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 					</h2>
 					<button
 						onClick={nextMonth}
-						className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[hsl(210_20%_80%/0.08)] hover:text-foreground"
+						className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-[hsl(210_20%_80%/0.08)] hover:text-foreground glass-interactive"
 						aria-label="Mes siguiente"
 					>
 						<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -346,9 +348,9 @@ function MatchRow({ match }: { match: Match }) {
 			<div className="mb-2.5 flex items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
 					<span
-						className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
+						className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
 					>
-						{CATEGORY_LABELS[match.category].short}
+												{CATEGORY_LABELS[match.category].full}
 					</span>
 					{match.status === STATUS_PLAYED ? (
 						<span className="inline-flex rounded-md bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/25">

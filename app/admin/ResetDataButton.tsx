@@ -66,7 +66,7 @@ export default function ResetDataButton() {
 		<button
 			onClick={handleClick}
 			disabled={isDisabled}
-			className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold transition-all disabled:opacity-50 ${
+			className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold transition-all disabled:opacity-50 glass-interactive ${
 				state === "confirming"
 					? "animate-pulse bg-destructive text-destructive-foreground"
 					: state === "done"

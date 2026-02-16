@@ -74,19 +74,19 @@ function buildScore(s: SetScores): string {
 
 /** Glass input style for score boxes */
 const scoreInputClass =
-	"h-11 w-11 rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] text-center font-mono text-base font-bold text-foreground outline-none transition-colors focus:border-ring";
+	"h-11 w-11 rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] text-center font-mono text-base font-bold text-foreground outline-none transition-colors focus:border-ring glass-interactive";
 
 /* ── Phase tab styles ── */
 const phaseTabBase =
-	"rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground";
+	"rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground glass-interactive";
 const phaseTabActive =
-	"rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30";
+	"rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30 glass-interactive";
 
 /* ── Category pill styles ── */
 const pillBase =
-	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground";
+	"inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground glass-interactive";
 const pillActive =
-	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30";
+	"inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30 glass-interactive";
 
 /**
  * Admin results management — supports Round Robin (Fase 1) and Bracket (Fase 2).
@@ -419,7 +419,7 @@ function AdminBracketPhase({
 						onClick={() => setCategoryFilter(cat)}
 						className={categoryFilter === cat ? pillActive : pillBase}
 					>
-						{CATEGORY_LABELS[cat].full}
+{CATEGORY_LABELS[cat].full}
 					</button>
 				))}
 
@@ -429,7 +429,7 @@ function AdminBracketPhase({
 				<button
 					onClick={() => onGenerateBracket(categoryFilter)}
 					disabled={generating}
-					className="inline-flex items-center gap-1.5 rounded-lg bg-accent/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-accent ring-1 ring-accent/30 transition-colors hover:bg-accent/30 disabled:opacity-50"
+					className="inline-flex items-center gap-1.5 rounded-lg bg-accent/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-accent ring-1 ring-accent/30 transition-colors hover:bg-accent/30 disabled:opacity-50 glass-interactive"
 				>
 					<Zap className="h-3.5 w-3.5" />
 					{generating ? "Generando..." : "Generar Llaves"}
@@ -536,21 +536,21 @@ function PendingMatchCard({
 			{/* Top row: category badge + action */}
 			<div className="mb-2.5 flex items-center justify-between gap-2">
 				<span
-					className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
+					className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
 				>
-					{CATEGORY_LABELS[match.category].short}
+										{CATEGORY_LABELS[match.category].full}
 				</span>
 				{editingId === match.id ? (
 					<button
 						onClick={onCancelEdit}
-						className="inline-flex items-center gap-1 rounded-lg bg-[hsl(210_20%_80%/0.06)] px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+						className="inline-flex items-center gap-1 rounded-lg bg-[hsl(210_20%_80%/0.06)] px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground glass-interactive"
 					>
 						<X className="h-3.5 w-3.5" />
 					</button>
 				) : (
 					<button
 						onClick={() => onStartEdit(match)}
-						className="inline-flex items-center gap-1 rounded-lg bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary ring-1 ring-primary/30 transition-colors"
+						className="inline-flex items-center gap-1 rounded-lg bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary ring-1 ring-primary/30 transition-colors glass-interactive"
 					>
 						<Edit className="h-3.5 w-3.5" />
 						Ingresar
@@ -628,9 +628,9 @@ function PlayedMatchCard({
 			<div className="mb-2.5 flex items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
 					<span
-						className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
+						className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
 					>
-						{CATEGORY_LABELS[match.category].short}
+												{CATEGORY_LABELS[match.category].full}
 					</span>
 					{match.date_played && (
 						<span className="text-xs text-muted-foreground">
@@ -642,27 +642,27 @@ function PlayedMatchCard({
 					{editingId === match.id ? (
 						<button
 							onClick={onCancelEdit}
-							className="inline-flex items-center rounded-md bg-[hsl(210_20%_80%/0.06)] p-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+							className="inline-flex items-center rounded-md bg-[hsl(210_20%_80%/0.06)] p-1 text-xs text-muted-foreground transition-colors hover:text-foreground glass-interactive"
 						>
 							<X className="h-3.5 w-3.5" />
 						</button>
 					) : (
 						<button
 							onClick={() => onStartEdit(match)}
-							className="inline-flex items-center rounded-md bg-[hsl(210_20%_80%/0.06)] p-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+							className="inline-flex items-center rounded-md bg-[hsl(210_20%_80%/0.06)] p-1 text-xs text-muted-foreground transition-colors hover:text-foreground glass-interactive"
 						>
 							<Edit className="h-3.5 w-3.5" />
 						</button>
 					)}
 					<button
 						onClick={() => onReset(match.id)}
-						className="inline-flex items-center rounded-md bg-accent/10 p-1 text-xs text-accent transition-colors hover:bg-accent/20"
+						className="inline-flex items-center rounded-md bg-accent/10 p-1 text-xs text-accent transition-colors hover:bg-accent/20 glass-interactive"
 					>
 						<RotateCcw className="h-3.5 w-3.5" />
 					</button>
 					<button
 						onClick={() => onDelete(match.id)}
-						className="inline-flex items-center rounded-md bg-destructive/10 p-1 text-xs text-destructive transition-colors hover:bg-destructive/20"
+						className="inline-flex items-center rounded-md bg-destructive/10 p-1 text-xs text-destructive transition-colors hover:bg-destructive/20 glass-interactive"
 					>
 						<Trash2 className="h-3.5 w-3.5" />
 					</button>
@@ -862,12 +862,12 @@ function ScoreEditor({
 					type="date"
 					value={datePlayed}
 					onChange={(e) => setDatePlayed(e.target.value)}
-					className="w-auto rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring"
+					className="w-auto rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring glass-interactive"
 				/>
 				<button
 					onClick={onSave}
 					disabled={saving}
-					className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity disabled:opacity-50"
+					className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity disabled:opacity-50 glass-interactive"
 				>
 					{saving ? "..." : "Guardar"}
 				</button>

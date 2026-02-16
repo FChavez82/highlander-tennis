@@ -9,7 +9,6 @@ import {
 	CATEGORY_FEMALE,
 	STATUS_PENDING,
 	STATUS_PLAYED,
-	CATEGORY_LABELS,
 } from "@/lib/constants";
 
 /** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
@@ -52,7 +51,6 @@ export default async function Home() {
 					<Users className="mx-auto mb-2 h-5 w-5 text-primary" />
 					<div className="font-display text-3xl font-bold text-primary">{totalPlayers}</div>
 					<div className="mt-1 text-sm text-muted-foreground">Jugadores</div>
-					<div className="mt-0.5 text-xs text-muted-foreground/70">{stats.players[CATEGORY_MALE]} {CATEGORY_LABELS[CATEGORY_MALE].short} / {stats.players[CATEGORY_FEMALE]} {CATEGORY_LABELS[CATEGORY_FEMALE].short}</div>
 				</div>
 				<div className="glass rounded-2xl p-5">
 					<CalendarDays className="mx-auto mb-2 h-5 w-5 text-foreground" />

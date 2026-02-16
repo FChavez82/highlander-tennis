@@ -18,10 +18,10 @@ const ADMIN_LINKS = [
 
 /** Pill base */
 const pillBase =
-	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground";
+	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground glass-interactive";
 /** Pill active */
 const pillActive =
-	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30";
+	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30 glass-interactive";
 
 export default function AdminNav() {
 	const pathname = usePathname();
@@ -45,7 +45,7 @@ export default function AdminNav() {
 			})}
 			<button
 				onClick={() => signOut({ callbackUrl: "/admin" })}
-				className="inline-flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-destructive transition-colors hover:bg-destructive/20"
+				className="inline-flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-destructive transition-colors hover:bg-destructive/20 glass-interactive"
 			>
 				<LogOut className="h-3.5 w-3.5" />
 				Salir

@@ -82,13 +82,13 @@ export default function AdminPlayerManager({
 						value={name}
 						onChange={(e) => setName(e.target.value)}
 						placeholder="Nombre del jugador"
-						className="min-w-[200px] flex-1 rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
+						className="min-w-[200px] flex-1 rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring glass-interactive"
 						required
 					/>
 					<select
 						value={category}
 						onChange={(e) => setCategory(e.target.value as Category)}
-						className="cursor-pointer rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] px-4 py-2.5 text-sm text-foreground outline-none"
+						className="cursor-pointer rounded-lg border border-input bg-[hsl(210_20%_80%/0.06)] px-4 py-2.5 text-sm text-foreground outline-none glass-interactive"
 					>
 						<option value={CATEGORY_MALE}>{CATEGORY_LABELS[CATEGORY_MALE].full}</option>
 						<option value={CATEGORY_FEMALE}>{CATEGORY_LABELS[CATEGORY_FEMALE].full}</option>
@@ -96,7 +96,7 @@ export default function AdminPlayerManager({
 					<button
 						type="submit"
 						disabled={loading}
-						className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-opacity disabled:opacity-50"
+						className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-opacity disabled:opacity-50 glass-interactive"
 					>
 						<Plus className="h-4 w-4" />
 						{loading ? "Agregando..." : "Agregar"}
@@ -157,7 +157,7 @@ function PlayerList({
 							<button
 								onClick={() => onDelete(player.id, player.name)}
 								disabled={deleteLoading === player.id}
-								className="inline-flex items-center gap-1 rounded-lg bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50"
+								className="inline-flex items-center gap-1 rounded-lg bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50 glass-interactive"
 							>
 								<Trash2 className="h-3.5 w-3.5" />
 								{deleteLoading === player.id ? "..." : "Eliminar"}

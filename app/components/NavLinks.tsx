@@ -24,11 +24,11 @@ const NAV_LINKS = [
 
 /** Inactive pill style */
 const pillBase =
-	"rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground";
+	"rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground glass-interactive";
 
 /** Active pill style */
 const pillActive =
-	"rounded-lg px-4 py-2 text-sm font-medium bg-primary/20 text-primary ring-1 ring-primary/30";
+	"rounded-lg px-4 py-2 text-sm font-medium bg-primary/20 text-primary ring-1 ring-primary/30 glass-interactive";
 
 /** Check if a link is active based on the current pathname */
 function isActive(href: string, pathname: string): boolean {

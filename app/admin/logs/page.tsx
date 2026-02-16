@@ -154,7 +154,7 @@ export default async function AuditLogsPage({
 						{page > 1 ? (
 							<Link
 								href={`/admin/logs?page=${page - 1}`}
-								className="inline-flex items-center gap-1 rounded-lg bg-[hsl(210_20%_80%/0.06)] px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-[hsl(210_20%_80%/0.12)]"
+								className="inline-flex items-center gap-1 rounded-lg bg-[hsl(210_20%_80%/0.06)] px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-[hsl(210_20%_80%/0.12)] glass-interactive"
 							>
 								<ChevronLeft className="h-3.5 w-3.5" />
 								Anterior
@@ -173,7 +173,7 @@ export default async function AuditLogsPage({
 						{page < totalPages ? (
 							<Link
 								href={`/admin/logs?page=${page + 1}`}
-								className="inline-flex items-center gap-1 rounded-lg bg-[hsl(210_20%_80%/0.06)] px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-[hsl(210_20%_80%/0.12)]"
+								className="inline-flex items-center gap-1 rounded-lg bg-[hsl(210_20%_80%/0.06)] px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-[hsl(210_20%_80%/0.12)] glass-interactive"
 							>
 								Siguiente
 								<ChevronRight className="h-3.5 w-3.5" />

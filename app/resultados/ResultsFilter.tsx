@@ -26,16 +26,16 @@ import { safeDate, isRecent } from "@/lib/utils";
 /* ── Pill styles ── */
 
 const pillBase =
-	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground";
+	"inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground glass-interactive";
 const pillActive =
-	"rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30";
+	"inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30 glass-interactive";
 
 /* ── Phase tab styles (slightly larger than filter pills) ── */
 
 const phaseTabBase =
-	"rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground";
+	"rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider transition-colors bg-[hsl(210_20%_80%/0.06)] text-secondary-foreground glass-interactive";
 const phaseTabActive =
-	"rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30";
+	"rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider bg-primary/20 text-primary ring-1 ring-primary/30 glass-interactive";
 
 /**
  * Results display — supports Fase 1 (Round Robin) and Fase 2 (Bracket) tabs.
@@ -100,7 +100,7 @@ export default function ResultsFilter({
 								aria-pressed={filter === f}
 								className={filter === f ? pillActive : pillBase}
 							>
-								{f === "all" ? "Todos" : CATEGORY_LABELS[f].full}
+{f === "all" ? "Todos" : CATEGORY_LABELS[f].full}
 							</button>
 						))}
 						<div className="hidden h-6 w-px bg-border sm:block" />
@@ -108,7 +108,7 @@ export default function ResultsFilter({
 							value={selectedPlayer}
 							onChange={(e) => setSelectedPlayer(e.target.value)}
 							aria-label="Filtrar por jugador"
-							className="rounded-lg bg-[hsl(210_20%_80%/0.06)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-secondary-foreground ring-1 ring-border transition-colors focus:outline-none focus:ring-primary/30"
+							className="rounded-lg bg-[hsl(210_20%_80%/0.06)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-secondary-foreground ring-1 ring-border transition-colors focus:outline-none focus:ring-primary/30 glass-interactive"
 						>
 							<option value="all">Todos los jugadores</option>
 							{playerNames.map((name) => (
@@ -151,9 +151,9 @@ function ResultCard({ match }: { match: Match }) {
 		<div className="glass rounded-2xl p-3 transition-shadow hover:glass-glow-primary">
 			<div className="mb-2.5 flex items-center justify-between gap-2">
 				<span
-					className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
+					className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ${categoryBadgeClass(match.category)}`}
 				>
-					{CATEGORY_LABELS[match.category].short}
+										{CATEGORY_LABELS[match.category].full}
 				</span>
 				{match.date_played && (
 					<span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -331,7 +331,7 @@ function BracketView({ matches }: { matches: Match[] }) {
 						onClick={() => setCategoryFilter(cat)}
 						className={categoryFilter === cat ? pillActive : pillBase}
 					>
-						{CATEGORY_LABELS[cat].full}
+{CATEGORY_LABELS[cat].full}
 					</button>
 				))}
 			</div>

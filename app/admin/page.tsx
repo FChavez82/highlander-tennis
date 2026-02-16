@@ -4,7 +4,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { getStats } from "@/lib/db";
 import { Users, CalendarDays, Clock, CheckCircle } from "lucide-react";
-import { CATEGORY_MALE, CATEGORY_FEMALE, STATUS_PENDING, STATUS_PLAYED, CATEGORY_LABELS } from "@/lib/constants";
+import { CATEGORY_MALE, CATEGORY_FEMALE, STATUS_PENDING, STATUS_PLAYED } from "@/lib/constants";
 import ResetDataButton from "./ResetDataButton";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,6 @@ export default async function AdminDashboard() {
 					<Users className="mx-auto mb-2 h-5 w-5 text-primary" />
 					<div className="font-display text-3xl font-bold text-primary">{totalPlayers}</div>
 					<div className="mt-1 text-sm text-muted-foreground">Jugadores</div>
-					<div className="mt-0.5 text-xs text-muted-foreground/70">{stats.players[CATEGORY_MALE]} {CATEGORY_LABELS[CATEGORY_MALE].short} / {stats.players[CATEGORY_FEMALE]} {CATEGORY_LABELS[CATEGORY_FEMALE].short}</div>
 				</div>
 				<div className="glass rounded-2xl p-5 text-center">
 					<CalendarDays className="mx-auto mb-2 h-5 w-5 text-foreground" />
