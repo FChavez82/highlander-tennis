@@ -45,6 +45,11 @@ export const BRACKET_ROUND_LABELS: Record<BracketRound, string> = {
 	[BRACKET_ROUND_THIRD_PLACE]: "3er Puesto",
 };
 
+/* ── Recent match threshold ── */
+
+/** Matches played within this many days show a "Nuevo" badge */
+export const RECENT_MATCH_DAYS = 7;
+
 /* ── Match statuses ── */
 export const STATUS_PENDING = "pendiente" as const;
 export const STATUS_PLAYED = "jugado" as const;
@@ -117,3 +122,9 @@ export function categoryBadgeClass(category: Category): string {
 /* ── Tournament info (easy to update when final names/dates are confirmed) ── */
 export const TOURNAMENT_NAME = "Colinas Invitational";
 export const TOURNAMENT_DATES = "6 de Abril – 30 de Junio, 2026";
+
+/** Base URL for meta tags — uses Vercel's auto-set env var, falls back to localhost */
+export const SITE_URL =
+	process.env.VERCEL_URL
+		? `https://${process.env.VERCEL_URL}`
+		: "http://localhost:3000";
