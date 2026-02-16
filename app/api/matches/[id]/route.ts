@@ -7,7 +7,7 @@
  * DELETE — Delete a match (requires admin session)
  */
 import { NextRequest, NextResponse } from "next/server";
-import { updateMatch, deleteMatch, resetMatch, advanceBracket, getMatchById } from "@/lib/db";
+import { updateMatch, deleteMatch, resetMatch, cancelMatch, advanceBracket, getMatchById } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { validateScore } from "@/lib/constants";
@@ -39,6 +39,17 @@ export async function PUT(
 
 		/* Snapshot match BEFORE any changes for audit trail */
 		const prevMatch = await getMatchById(matchId);
+
+		/* If cancel=true, mark the match as cancelled */
+		if (body.cancel) {
+			const match = await cancelMatch(matchId);
+
+			await logAction(adminEmail, "cancel_match", "match", matchId, prevMatch ? {
+				score: prevMatch.score, status: prevMatch.status, date_played: prevMatch.date_played,
+			} : null, { score: null, status: match.status, date_played: null });
+
+			return NextResponse.json(match);
+		}
 
 		/* If reset=true, clear the match result */
 		if (body.reset) {

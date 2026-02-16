@@ -20,6 +20,7 @@ const NAV_LINKS = [
 	{ href: "/clasificacion", label: "Clasificacion" },
 	{ href: "/resultados", label: "Resultados" },
 	{ href: "/calendario", label: "Calendario" },
+	{ href: "/partidos-semana", label: "Semana" },
 ];
 
 /** Inactive pill style */

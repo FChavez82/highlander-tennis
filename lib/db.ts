@@ -18,6 +18,7 @@ import {
 	type MatchStatus,
 	type Phase,
 	type BracketRound,
+	type WeekStatus,
 } from "./constants";
 import { determineWinner, countSets } from "./score";
 
@@ -42,10 +43,30 @@ export interface Match {
 	date_played: string | null;
 	phase: Phase;
 	bracket_round: BracketRound | null;
+	week_id: number | null;
 	created_at: string;
 	/* Joined fields (populated by some queries) */
 	player_a_name?: string;
 	player_b_name?: string;
+}
+
+export interface ScheduleWeek {
+	id: number;
+	week_number: number;
+	start_date: string;
+	end_date: string;
+	status: WeekStatus;
+	created_at: string;
+}
+
+export interface PlayerAvailability {
+	id: number;
+	player_id: number;
+	week_id: number;
+	available: boolean;
+	/* Joined fields */
+	player_name?: string;
+	player_category?: Category;
 }
 
 export interface Standing {
@@ -186,8 +207,11 @@ export async function getPlayers(category?: string): Promise<Standing[]> {
 export { determineWinner, countSets } from "./score";
 
 /**
- * Create a new player and generate round-robin matches against
- * all existing players in the same category.
+ * Create a new player.
+ *
+ * When the bi-weekly scheduler is active (schedule_weeks table has rows),
+ * we skip auto-generating round-robin matches — the scheduler handles pairings.
+ * Otherwise (legacy mode), generate matches against all existing same-category players.
  */
 export async function createPlayer(
 	name: string,
@@ -201,13 +225,24 @@ export async function createPlayer(
 	`;
 	const newPlayer = rows[0] as Player;
 
-	/* Get all existing players in the same category (excluding the new one) */
+	/* Check if the bi-weekly scheduler is active */
+	const { rows: weekCheck } = await sql`
+		SELECT COUNT(*)::int AS count FROM schedule_weeks;
+	`;
+	const schedulerActive = weekCheck[0].count > 0;
+
+	/* If scheduler is active, skip auto round-robin — new player will be
+	   picked up in the next schedule generation automatically */
+	if (schedulerActive) {
+		return newPlayer;
+	}
+
+	/* Legacy mode: generate round-robin matches against all existing same-category players */
 	const { rows: existing } = await sql`
 		SELECT id FROM players
 		WHERE category = ${category} AND id != ${newPlayer.id};
 	`;
 
-	/* Create a match for each existing player in the same category */
 	for (const other of existing) {
 		await sql`
 			INSERT INTO matches (player_a_id, player_b_id, category)
@@ -325,6 +360,22 @@ export async function resetMatch(id: number): Promise<Match> {
 		SET score = NULL,
 		    date_played = NULL,
 		    status = 'pendiente'
+		WHERE id = ${id}
+		RETURNING *;
+	`;
+	return rows[0] as Match;
+}
+
+/**
+ * Cancel a match — sets status to 'cancelado'.
+ * Cancelled matches free up the player pairing for future week scheduling.
+ */
+export async function cancelMatch(id: number): Promise<Match> {
+	const { rows } = await sql`
+		UPDATE matches
+		SET status = 'cancelado',
+		    score = NULL,
+		    date_played = NULL
 		WHERE id = ${id}
 		RETURNING *;
 	`;
@@ -612,4 +663,177 @@ export async function getStats() {
 			[STATUS_PLAYED]: matchCounts.find((r) => r.status === STATUS_PLAYED)?.count ?? 0,
 		},
 	};
+}
+
+/* ================================================================
+   Schedule Weeks (bi-weekly matching system)
+   ================================================================ */
+
+/**
+ * Get all schedule weeks, ordered by start_date ascending.
+ */
+export async function getScheduleWeeks(): Promise<ScheduleWeek[]> {
+	const { rows } = await sql`
+		SELECT * FROM schedule_weeks ORDER BY start_date;
+	`;
+	return rows as ScheduleWeek[];
+}
+
+/**
+ * Get a single schedule week by ID.
+ */
+export async function getScheduleWeekById(id: number): Promise<ScheduleWeek | null> {
+	const { rows } = await sql`SELECT * FROM schedule_weeks WHERE id = ${id};`;
+	return (rows[0] as ScheduleWeek) ?? null;
+}
+
+/**
+ * Create a new schedule week (Mon-Sun).
+ */
+export async function createScheduleWeek(
+	weekNumber: number,
+	startDate: string,
+	endDate: string
+): Promise<ScheduleWeek> {
+	const { rows } = await sql`
+		INSERT INTO schedule_weeks (week_number, start_date, end_date)
+		VALUES (${weekNumber}, ${startDate}, ${endDate})
+		RETURNING *;
+	`;
+	return rows[0] as ScheduleWeek;
+}
+
+/**
+ * Update a schedule week's status (draft → published → completed).
+ */
+export async function updateWeekStatus(
+	weekId: number,
+	status: WeekStatus
+): Promise<ScheduleWeek> {
+	const { rows } = await sql`
+		UPDATE schedule_weeks SET status = ${status} WHERE id = ${weekId} RETURNING *;
+	`;
+	return rows[0] as ScheduleWeek;
+}
+
+/**
+ * Delete a schedule week and all its associated matches (via ON DELETE SET NULL)
+ * and availability records (via ON DELETE CASCADE on player_availability).
+ */
+export async function deleteScheduleWeek(weekId: number): Promise<void> {
+	/* Delete matches linked to this week first */
+	await sql`DELETE FROM matches WHERE week_id = ${weekId};`;
+	/* Delete availability records (CASCADE handles this, but be explicit) */
+	await sql`DELETE FROM player_availability WHERE week_id = ${weekId};`;
+	/* Delete the week itself */
+	await sql`DELETE FROM schedule_weeks WHERE id = ${weekId};`;
+}
+
+/**
+ * Get the highest week_number so far, for generating the next sequential batch.
+ */
+export async function getMaxWeekNumber(): Promise<number> {
+	const { rows } = await sql`
+		SELECT COALESCE(MAX(week_number), 0)::int AS max_num FROM schedule_weeks;
+	`;
+	return rows[0].max_num;
+}
+
+/* ================================================================
+   Player Availability
+   ================================================================ */
+
+/**
+ * Get availability for a specific week, with player names joined.
+ * Returns ALL players with their availability status for the week.
+ * Players without an explicit availability record default to available (true).
+ */
+export async function getWeekAvailability(weekId: number): Promise<PlayerAvailability[]> {
+	const { rows } = await sql`
+		SELECT
+			p.id AS player_id,
+			p.name AS player_name,
+			p.category AS player_category,
+			COALESCE(pa.available, true) AS available,
+			pa.id,
+			${weekId}::int AS week_id
+		FROM players p
+		LEFT JOIN player_availability pa
+			ON pa.player_id = p.id AND pa.week_id = ${weekId}
+		ORDER BY p.category, p.name;
+	`;
+	return rows as PlayerAvailability[];
+}
+
+/**
+ * Set a player's availability for a week (upsert).
+ * Creates the record if it doesn't exist, updates if it does.
+ */
+export async function setPlayerAvailability(
+	playerId: number,
+	weekId: number,
+	available: boolean
+): Promise<void> {
+	await sql`
+		INSERT INTO player_availability (player_id, week_id, available)
+		VALUES (${playerId}, ${weekId}, ${available})
+		ON CONFLICT (player_id, week_id)
+		DO UPDATE SET available = ${available};
+	`;
+}
+
+/**
+ * Bulk initialize availability for a week — creates records for ALL players,
+ * defaulting to available=true. Skips any already-existing records.
+ */
+export async function initializeWeekAvailability(weekId: number): Promise<void> {
+	await sql`
+		INSERT INTO player_availability (player_id, week_id, available)
+		SELECT p.id, ${weekId}, true
+		FROM players p
+		ON CONFLICT (player_id, week_id) DO NOTHING;
+	`;
+}
+
+/* ================================================================
+   Scheduled Matches (week-linked)
+   ================================================================ */
+
+/**
+ * Get matches for a specific week, with player names joined.
+ */
+export async function getMatchesByWeek(weekId: number): Promise<Match[]> {
+	const { rows } = await sql`
+		SELECT m.*, pa.name AS player_a_name, pb.name AS player_b_name
+		FROM matches m
+		LEFT JOIN players pa ON pa.id = m.player_a_id
+		LEFT JOIN players pb ON pb.id = m.player_b_id
+		WHERE m.week_id = ${weekId}
+		ORDER BY m.category, m.id;
+	`;
+	return rows as Match[];
+}
+
+/**
+ * Create a scheduled match linked to a week.
+ */
+export async function createScheduledMatch(
+	playerAId: number,
+	playerBId: number,
+	category: Category,
+	weekId: number
+): Promise<Match> {
+	const { rows } = await sql`
+		INSERT INTO matches (player_a_id, player_b_id, category, week_id, phase)
+		VALUES (${playerAId}, ${playerBId}, ${category}, ${weekId}, 'round_robin')
+		RETURNING *;
+	`;
+	return rows[0] as Match;
+}
+
+/**
+ * Delete all matches for a specific week (used when re-generating a week's schedule).
+ */
+export async function deleteMatchesByWeek(weekId: number): Promise<void> {
+	await sql`DELETE FROM matches WHERE week_id = ${weekId};`;
 }

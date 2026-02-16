@@ -53,12 +53,14 @@ export const RECENT_MATCH_DAYS = 7;
 /* ── Match statuses ── */
 export const STATUS_PENDING = "pendiente" as const;
 export const STATUS_PLAYED = "jugado" as const;
-export type MatchStatus = typeof STATUS_PENDING | typeof STATUS_PLAYED;
+export const STATUS_CANCELLED = "cancelado" as const;
+export type MatchStatus = typeof STATUS_PENDING | typeof STATUS_PLAYED | typeof STATUS_CANCELLED;
 
 /** Human-readable labels for each status */
 export const STATUS_LABELS: Record<MatchStatus, { full: string; short: string }> = {
 	[STATUS_PENDING]: { full: "Pendientes", short: "Pend" },
 	[STATUS_PLAYED]: { full: "Jugados", short: "Jug" },
+	[STATUS_CANCELLED]: { full: "Cancelados", short: "Canc" },
 };
 
 /* ── Score validation ── */
@@ -118,6 +120,30 @@ export function categoryBadgeClass(category: Category): string {
 		? "bg-cat-male/15 text-cat-male ring-cat-male/25"
 		: "bg-cat-female/15 text-cat-female ring-cat-female/25";
 }
+
+/* ── Schedule configuration (bi-weekly matching system) ── */
+
+/** Number of matches each player is assigned per week */
+export const MATCHES_PER_PLAYER_PER_WEEK = 1;
+
+/** Number of weeks generated at a time when admin triggers schedule generation */
+export const SCHEDULE_GENERATION_WEEKS = 2;
+
+/* ── Schedule week statuses ── */
+export const WEEK_STATUS_DRAFT = "draft" as const;
+export const WEEK_STATUS_PUBLISHED = "published" as const;
+export const WEEK_STATUS_COMPLETED = "completed" as const;
+export type WeekStatus =
+	| typeof WEEK_STATUS_DRAFT
+	| typeof WEEK_STATUS_PUBLISHED
+	| typeof WEEK_STATUS_COMPLETED;
+
+/** Human-readable labels for week statuses */
+export const WEEK_STATUS_LABELS: Record<WeekStatus, string> = {
+	[WEEK_STATUS_DRAFT]: "Borrador",
+	[WEEK_STATUS_PUBLISHED]: "Publicado",
+	[WEEK_STATUS_COMPLETED]: "Completado",
+};
 
 /* ── Tournament info (easy to update when final names/dates are confirmed) ── */
 export const TOURNAMENT_NAME = "Colinas Invitational";
