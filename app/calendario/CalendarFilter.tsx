@@ -9,6 +9,8 @@ import {
 	categoryBadgeClass,
 	type Category, type MatchStatus,
 } from "@/lib/constants";
+import { parseSets, getWinner, type ParsedSet } from "@/lib/score";
+import { safeDate } from "@/lib/utils";
 
 /* ── Shared pill styles ── */
 const pillBase =
@@ -27,9 +29,6 @@ const MONTH_NAMES = [
 
 /* ── Types ── */
 
-/** Parsed set: each player's score for one set, plus whether it's a super-tiebreak */
-type ParsedSet = { a: number; b: number; isTiebreak: boolean };
-
 /** A single cell in the calendar grid */
 type CalendarCell = {
 	day: number;          /* day of month (1-31) */
@@ -38,23 +37,6 @@ type CalendarCell = {
 };
 
 /* ── Helpers ── */
-
-/** Parse a score string like "6-4, 3-6, [10-7]" into individual sets */
-function parseSets(score: string): ParsedSet[] {
-	if (!score) return [];
-	return score.split(",").map((s) => {
-		const trimmed = s.trim();
-		const tbMatch = trimmed.match(/\[(\d+)-(\d+)\]/);
-		if (tbMatch) {
-			return { a: parseInt(tbMatch[1]), b: parseInt(tbMatch[2]), isTiebreak: true };
-		}
-		const parts = trimmed.split("-").map((n) => parseInt(n.trim()));
-		if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-			return { a: parts[0], b: parts[1], isTiebreak: false };
-		}
-		return null;
-	}).filter((s): s is ParsedSet => s !== null);
-}
 
 /** Group played matches by their date_played (YYYY-MM-DD key) */
 function groupMatchesByDay(matches: Match[]): Map<string, Match[]> {
@@ -119,25 +101,6 @@ function buildCalendarGrid(year: number, month: number): CalendarCell[] {
 	}
 
 	return cells;
-}
-
-/** Parse a date string safely, pinning to noon to avoid timezone day-shift */
-function safeDate(d: string | Date): Date {
-	const raw = typeof d === "string" ? d : d.toISOString();
-	return new Date(raw.slice(0, 10) + "T12:00:00");
-}
-
-/** Determine winner: "a" if player A won more sets, "b" if player B, null if tie/unknown */
-function getWinner(sets: ParsedSet[]): "a" | "b" | null {
-	let aWins = 0;
-	let bWins = 0;
-	for (const s of sets) {
-		if (s.a > s.b) aWins++;
-		else if (s.b > s.a) bWins++;
-	}
-	if (aWins > bWins) return "a";
-	if (bWins > aWins) return "b";
-	return null;
 }
 
 /** Get today's date as YYYY-MM-DD */
@@ -208,22 +171,24 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 		<>
 			{/* ── Filter pills ── */}
 			<div className="flex flex-wrap gap-4">
-				<div className="flex gap-2">
+				<div className="flex gap-2" role="group" aria-label="Filtrar por categoria">
 					{(["all", CATEGORY_MALE, CATEGORY_FEMALE] as const).map((f) => (
 						<button
 							key={f}
 							onClick={() => setCatFilter(f)}
+							aria-pressed={catFilter === f}
 							className={catFilter === f ? pillActive : pillBase}
 						>
 							{f === "all" ? "Todas" : CATEGORY_LABELS[f].short}
 						</button>
 					))}
 				</div>
-				<div className="flex gap-2">
+				<div className="flex gap-2" role="group" aria-label="Filtrar por estado">
 					{(["all", STATUS_PENDING, STATUS_PLAYED] as const).map((f) => (
 						<button
 							key={f}
 							onClick={() => setStatusFilter(f)}
+							aria-pressed={statusFilter === f}
 							className={statusFilter === f ? pillActive : pillBase}
 						>
 							{f === "all" ? "Todos" : STATUS_LABELS[f].full}

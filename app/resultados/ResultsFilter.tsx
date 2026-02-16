@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Trophy } from "lucide-react";
 import type { Match } from "@/lib/db";
 import {
@@ -19,43 +20,8 @@ import {
 	type Phase,
 	type BracketRound,
 } from "@/lib/constants";
-
-/* ── Score parsing helpers ── */
-
-type ParsedSet = { a: number; b: number; isTiebreak: boolean };
-
-function parseSets(score: string): ParsedSet[] {
-	if (!score) return [];
-	return score.split(",").map((s) => {
-		const trimmed = s.trim();
-		const tbMatch = trimmed.match(/\[(\d+)-(\d+)\]/);
-		if (tbMatch) {
-			return { a: parseInt(tbMatch[1]), b: parseInt(tbMatch[2]), isTiebreak: true };
-		}
-		const parts = trimmed.split("-").map((n) => parseInt(n.trim()));
-		if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-			return { a: parts[0], b: parts[1], isTiebreak: false };
-		}
-		return null;
-	}).filter((s): s is ParsedSet => s !== null);
-}
-
-function safeDate(d: string | Date): Date {
-	const raw = typeof d === "string" ? d : d.toISOString();
-	return new Date(raw.slice(0, 10) + "T12:00:00");
-}
-
-function getWinner(sets: ParsedSet[]): "a" | "b" | null {
-	let aWins = 0;
-	let bWins = 0;
-	for (const s of sets) {
-		if (s.a > s.b) aWins++;
-		else if (s.b > s.a) bWins++;
-	}
-	if (aWins > bWins) return "a";
-	if (bWins > aWins) return "b";
-	return null;
-}
+import { parseSets, getWinner, type ParsedSet } from "@/lib/score";
+import { safeDate, isRecent } from "@/lib/utils";
 
 /* ── Pill styles ── */
 
@@ -131,6 +97,7 @@ export default function ResultsFilter({
 							<button
 								key={f}
 								onClick={() => setFilter(f)}
+								aria-pressed={filter === f}
 								className={filter === f ? pillActive : pillBase}
 							>
 								{f === "all" ? "Todos" : CATEGORY_LABELS[f].full}
@@ -140,6 +107,7 @@ export default function ResultsFilter({
 						<select
 							value={selectedPlayer}
 							onChange={(e) => setSelectedPlayer(e.target.value)}
+							aria-label="Filtrar por jugador"
 							className="rounded-lg bg-[hsl(210_20%_80%/0.06)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-secondary-foreground ring-1 ring-border transition-colors focus:outline-none focus:ring-primary/30"
 						>
 							<option value="all">Todos los jugadores</option>
@@ -188,12 +156,17 @@ function ResultCard({ match }: { match: Match }) {
 					{CATEGORY_LABELS[match.category].short}
 				</span>
 				{match.date_played && (
-					<span className="text-xs text-muted-foreground">
+					<span className="flex items-center gap-1.5 text-xs text-muted-foreground">
 						{safeDate(match.date_played).toLocaleDateString("es-ES", {
 							day: "numeric",
 							month: "short",
 							year: "numeric",
 						})}
+						{isRecent(match.date_played) && (
+							<span className="inline-flex rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold uppercase leading-none text-accent ring-1 ring-accent/25">
+								Nuevo
+							</span>
+						)}
 					</span>
 				)}
 			</div>
@@ -213,7 +186,9 @@ function ResultCard({ match }: { match: Match }) {
 				))}
 
 				<div className="flex items-center gap-1 pr-1 max-w-[10rem]">
-					<span className="truncate text-sm font-semibold text-foreground">{match.player_a_name}</span>
+					<Link href={`/jugadores/${match.player_a_id}`} className="truncate text-sm font-semibold text-foreground transition-colors hover:text-primary">
+						{match.player_a_name}
+					</Link>
 					{winner === "a" && <Trophy className="h-3.5 w-3.5 flex-shrink-0 text-accent" />}
 				</div>
 				{sets.map((s, i) => (
@@ -230,7 +205,9 @@ function ResultCard({ match }: { match: Match }) {
 				))}
 
 				<div className="flex items-center gap-1 pr-1 max-w-[10rem]">
-					<span className="truncate text-sm font-semibold text-foreground">{match.player_b_name}</span>
+					<Link href={`/jugadores/${match.player_b_id}`} className="truncate text-sm font-semibold text-foreground transition-colors hover:text-primary">
+						{match.player_b_name}
+					</Link>
 					{winner === "b" && <Trophy className="h-3.5 w-3.5 flex-shrink-0 text-accent" />}
 				</div>
 				{sets.map((s, i) => (
@@ -274,9 +251,13 @@ function BracketMatchNode({ match, roundLabel }: { match: Match; roundLabel: str
 			}`}>
 				<div className="flex items-center gap-1.5 min-w-0">
 					{winner === "a" && <Trophy className="h-3.5 w-3.5 flex-shrink-0 text-accent" />}
-					<span className="truncate text-sm font-semibold text-foreground">
-						{match.player_a_name || "Por definir"}
-					</span>
+					{match.player_a_name ? (
+						<Link href={`/jugadores/${match.player_a_id}`} className="truncate text-sm font-semibold text-foreground transition-colors hover:text-primary">
+							{match.player_a_name}
+						</Link>
+					) : (
+						<span className="truncate text-sm font-semibold text-muted-foreground">Por definir</span>
+					)}
 				</div>
 				{isPlayed && (
 					<span className="flex-shrink-0 text-xs font-bold text-muted-foreground">
@@ -294,9 +275,13 @@ function BracketMatchNode({ match, roundLabel }: { match: Match; roundLabel: str
 			}`}>
 				<div className="flex items-center gap-1.5 min-w-0">
 					{winner === "b" && <Trophy className="h-3.5 w-3.5 flex-shrink-0 text-accent" />}
-					<span className="truncate text-sm font-semibold text-foreground">
-						{match.player_b_name || "Por definir"}
-					</span>
+					{match.player_b_name ? (
+						<Link href={`/jugadores/${match.player_b_id}`} className="truncate text-sm font-semibold text-foreground transition-colors hover:text-primary">
+							{match.player_b_name}
+						</Link>
+					) : (
+						<span className="truncate text-sm font-semibold text-muted-foreground">Por definir</span>
+					)}
 				</div>
 				{isPlayed && (
 					<span className="flex-shrink-0 text-xs font-bold text-muted-foreground">
