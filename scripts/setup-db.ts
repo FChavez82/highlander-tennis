@@ -68,6 +68,21 @@ async function setupDatabase() {
 	`;
 	console.log("✅ Columnas 'phase' y 'bracket_round' agregadas a 'matches'.");
 
+	/* ── Audit logs table ─────────────────────────────────────── */
+	await sql`
+		CREATE TABLE IF NOT EXISTS audit_logs (
+			id          SERIAL PRIMARY KEY,
+			admin_email VARCHAR(255) NOT NULL,
+			action      VARCHAR(50)  NOT NULL,
+			entity_type VARCHAR(20)  NOT NULL,
+			entity_id   INT,
+			prev_values JSONB,
+			new_values  JSONB,
+			created_at  TIMESTAMP    DEFAULT NOW()
+		);
+	`;
+	console.log("✅ Tabla 'audit_logs' creada.");
+
 	console.log("\n🎾 Base de datos lista.");
 }
 

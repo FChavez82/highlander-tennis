@@ -7,8 +7,9 @@
  * DELETE — Delete a match (requires admin session)
  */
 import { NextRequest, NextResponse } from "next/server";
-import { updateMatch, deleteMatch, resetMatch, advanceBracket } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { updateMatch, deleteMatch, resetMatch, advanceBracket, getMatchById } from "@/lib/db";
+import { getAdminSession } from "@/lib/auth";
+import { logAction } from "@/lib/audit";
 import { validateScore } from "@/lib/constants";
 
 export async function PUT(
@@ -16,7 +17,8 @@ export async function PUT(
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		if (!(await isAuthenticated())) {
+		const session = await getAdminSession();
+		if (!session) {
 			return NextResponse.json(
 				{ error: "No autorizado." },
 				{ status: 401 }
@@ -32,11 +34,20 @@ export async function PUT(
 			);
 		}
 
+		const adminEmail = session.user?.email ?? "unknown";
 		const body = await request.json();
+
+		/* Snapshot match BEFORE any changes for audit trail */
+		const prevMatch = await getMatchById(matchId);
 
 		/* If reset=true, clear the match result */
 		if (body.reset) {
 			const match = await resetMatch(matchId);
+
+			await logAction(adminEmail, "reset_match", "match", matchId, prevMatch ? {
+				score: prevMatch.score, status: prevMatch.status, date_played: prevMatch.date_played,
+			} : null, { score: null, status: match.status, date_played: null });
+
 			return NextResponse.json(match);
 		}
 
@@ -60,6 +71,10 @@ export async function PUT(
 
 		const match = await updateMatch(matchId, score.trim(), date_played);
 
+		await logAction(adminEmail, "update_match", "match", matchId, prevMatch ? {
+			score: prevMatch.score, status: prevMatch.status, date_played: prevMatch.date_played,
+		} : null, { score: match.score, status: match.status, date_played: match.date_played });
+
 		/* Auto-advance bracket: if this was a semifinal, populate final + 3rd place */
 		try {
 			await advanceBracket(matchId);
@@ -81,7 +96,8 @@ export async function DELETE(
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		if (!(await isAuthenticated())) {
+		const session = await getAdminSession();
+		if (!session) {
 			return NextResponse.json(
 				{ error: "No autorizado." },
 				{ status: 401 }
@@ -97,7 +113,23 @@ export async function DELETE(
 			);
 		}
 
+		/* Snapshot match BEFORE delete for audit trail */
+		const prevMatch = await getMatchById(matchId);
+
 		await deleteMatch(matchId);
+
+		await logAction(
+			session.user?.email ?? "unknown",
+			"delete_match",
+			"match",
+			matchId,
+			prevMatch ? {
+				player_a_id: prevMatch.player_a_id, player_b_id: prevMatch.player_b_id,
+				score: prevMatch.score, status: prevMatch.status, category: prevMatch.category,
+			} : null,
+			null
+		);
+
 		return NextResponse.json({ success: true });
 	} catch {
 		return NextResponse.json(

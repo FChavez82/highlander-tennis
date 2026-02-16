@@ -13,6 +13,7 @@ const ADMIN_LINKS = [
 	{ href: "/admin", label: "Dashboard", exact: true },
 	{ href: "/admin/jugadores", label: "Jugadores", exact: false },
 	{ href: "/admin/resultados", label: "Resultados", exact: false },
+	{ href: "/admin/logs", label: "Logs", exact: false },
 ];
 
 /** Pill base */

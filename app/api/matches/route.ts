@@ -8,7 +8,8 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getMatches, generateRoundRobin, generateBracket } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth";
+import { logAction } from "@/lib/audit";
 import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS, type Category } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
@@ -28,13 +29,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	try {
-		if (!(await isAuthenticated())) {
+		const session = await getAdminSession();
+		if (!session) {
 			return NextResponse.json(
 				{ error: "No autorizado." },
 				{ status: 401 }
 			);
 		}
 
+		const adminEmail = session.user?.email ?? "unknown";
 		const body = (await request.json()) as Record<string, unknown>;
 		const { category, action } = body;
 
@@ -53,6 +56,11 @@ export async function POST(request: NextRequest) {
 
 			try {
 				const result = await generateBracket(validCategory, qualifiers);
+
+				await logAction(adminEmail, "generate_bracket", "match", null, null, {
+					category: validCategory, type: "bracket", qualifiers, count: result.created,
+				});
+
 				return NextResponse.json({
 					success: true,
 					message: `Llaves generadas para ${CATEGORY_LABELS[validCategory].full}: ${result.created} partidos creados.`,
@@ -69,6 +77,11 @@ export async function POST(request: NextRequest) {
 
 		/* ── Default: generate round-robin ── */
 		const count = await generateRoundRobin(validCategory);
+
+		await logAction(adminEmail, "generate_round_robin", "match", null, null, {
+			category: validCategory, type: "round_robin", count,
+		});
+
 		return NextResponse.json({
 			success: true,
 			message: `${count} partidos generados para categoría ${CATEGORY_LABELS[validCategory].full}.`,

@@ -257,6 +257,15 @@ export async function getPlayerMatches(playerId: number): Promise<Match[]> {
 	return rows as Match[];
 }
 
+/**
+ * Get a single match by ID (raw row, no joins).
+ * Used to snapshot match state before updates/deletes for audit logging.
+ */
+export async function getMatchById(id: number): Promise<Match | null> {
+	const { rows } = await sql`SELECT * FROM matches WHERE id = ${id};`;
+	return (rows[0] as Match) ?? null;
+}
+
 /* ================================================================
    Matches
    ================================================================ */
@@ -530,6 +539,46 @@ export async function getRecentMatches(limit: number): Promise<Match[]> {
 		LIMIT ${limit};
 	`;
 	return rows as Match[];
+}
+
+/* ================================================================
+   Audit Logs
+   ================================================================ */
+
+export interface AuditLog {
+	id: number;
+	admin_email: string;
+	action: string;
+	entity_type: string;
+	entity_id: number | null;
+	prev_values: Record<string, unknown> | null;
+	new_values: Record<string, unknown> | null;
+	created_at: string;
+}
+
+/**
+ * Get paginated audit logs, newest first.
+ * Returns { logs, total } so the caller can compute total pages.
+ */
+export async function getAuditLogs(
+	page: number = 1,
+	limit: number = 50
+): Promise<{ logs: AuditLog[]; total: number }> {
+	const offset = (page - 1) * limit;
+
+	const [{ rows }, { rows: countRows }] = await Promise.all([
+		sql`
+			SELECT * FROM audit_logs
+			ORDER BY created_at DESC
+			LIMIT ${limit} OFFSET ${offset};
+		`,
+		sql`SELECT COUNT(*)::int AS total FROM audit_logs;`,
+	]);
+
+	return {
+		logs: rows as AuditLog[],
+		total: countRows[0].total,
+	};
 }
 
 /* ================================================================

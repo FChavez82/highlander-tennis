@@ -7,7 +7,8 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPlayers, createPlayer } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth";
+import { logAction } from "@/lib/audit";
 import { CATEGORY_MALE, CATEGORY_FEMALE, type Category } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
@@ -26,7 +27,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
 	try {
 		/* Verify admin authentication */
-		if (!(await isAuthenticated())) {
+		const session = await getAdminSession();
+		if (!session) {
 			return NextResponse.json(
 				{ error: "No autorizado." },
 				{ status: 401 }
@@ -50,6 +52,17 @@ export async function POST(request: NextRequest) {
 		}
 
 		const player = await createPlayer(name.trim(), category as Category);
+
+		/* Audit: log the new player creation */
+		await logAction(
+			session.user?.email ?? "unknown",
+			"create_player",
+			"player",
+			player.id,
+			null,
+			{ name: player.name, category: player.category }
+		);
+
 		return NextResponse.json(player, { status: 201 });
 	} catch {
 		return NextResponse.json(

@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 import { getAdminSession } from "@/lib/auth";
+import { logAction } from "@/lib/audit";
 
 export async function POST() {
 	try {
@@ -18,6 +19,16 @@ export async function POST() {
 				{ status: 401 }
 			);
 		}
+
+		/* Audit: log BEFORE truncate so the log entry survives the wipe */
+		await logAction(
+			session.user?.email ?? "unknown",
+			"reset_data",
+			"system",
+			null,
+			null,
+			{ action: "truncate matches, players" }
+		);
 
 		/* Wipe all tournament data — matches first (FK dependency), then players */
 		await sql`TRUNCATE matches, players RESTART IDENTITY CASCADE;`;
