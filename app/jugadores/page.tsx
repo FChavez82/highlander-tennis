@@ -1,10 +1,11 @@
 /**
  * /jugadores — Public player list with M/F tabs.
+ * Tab switching uses URL search params (?cat=M / ?cat=F) for deep-linking.
  */
 import type { Metadata } from "next";
-import { unstable_noStore as noStore } from "next/cache";
 import { getPlayers, type Standing } from "@/lib/db";
-import { CATEGORY_MALE, CATEGORY_FEMALE, TOURNAMENT_NAME } from "@/lib/constants";
+import { CATEGORY_MALE, CATEGORY_FEMALE, TOURNAMENT_NAME, type Category } from "@/lib/constants";
+import CategoryTabs from "@/app/components/CategoryTabs";
 import PlayerTabs from "./PlayerTabs";
 
 export const metadata: Metadata = {
@@ -12,10 +13,18 @@ export const metadata: Metadata = {
 	description: "Tabla de posiciones y estadísticas de los jugadores.",
 };
 
-export const dynamic = "force-dynamic";
+/** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
+export const revalidate = 60;
 
-export default async function JugadoresPage() {
-	noStore();
+export default async function JugadoresPage({
+	searchParams,
+}: {
+	searchParams: { cat?: string };
+}) {
+	/* Determine selected category from URL — defaults to Male */
+	const cat: Category =
+		searchParams.cat === CATEGORY_FEMALE ? CATEGORY_FEMALE : CATEGORY_MALE;
+
 	const [masculino, femenino] = await Promise.all([
 		getPlayers(CATEGORY_MALE),
 		getPlayers(CATEGORY_FEMALE),
@@ -26,10 +35,17 @@ export default async function JugadoresPage() {
 	masculino.sort(sortByWins);
 	femenino.sort(sortByWins);
 
+	/* Pick the selected category's data */
+	const players = cat === CATEGORY_MALE ? masculino : femenino;
+
 	return (
 		<div className="grid gap-5">
 			<h1 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground">Jugadores</h1>
-			<PlayerTabs masculino={masculino} femenino={femenino} />
+			<CategoryTabs
+				maleCount={masculino.length}
+				femaleCount={femenino.length}
+			/>
+			<PlayerTabs players={players} />
 		</div>
 	);
 }

@@ -3,7 +3,6 @@
  * Shows Fase 1 (Round Robin) and Fase 2 (Elimination Brackets) via tabs.
  */
 import type { Metadata } from "next";
-import { unstable_noStore as noStore } from "next/cache";
 import { getMatches } from "@/lib/db";
 import { STATUS_PLAYED, PHASE_ROUND_ROBIN, PHASE_BRACKET, TOURNAMENT_NAME } from "@/lib/constants";
 import ResultsFilter from "./ResultsFilter";
@@ -13,10 +12,10 @@ export const metadata: Metadata = {
 	description: "Resultados de los partidos completados del torneo.",
 };
 
-export const dynamic = "force-dynamic";
+/** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
+export const revalidate = 60;
 
 export default async function ResultadosPage() {
-	noStore();
 
 	/* Fetch round-robin played matches and ALL bracket matches (played + pending) */
 	const [roundRobinMatches, bracketMatches] = await Promise.all([

@@ -2,7 +2,6 @@
  * /calendario — Full round-robin schedule page.
  */
 import type { Metadata } from "next";
-import { unstable_noStore as noStore } from "next/cache";
 import { getMatches } from "@/lib/db";
 import { TOURNAMENT_NAME } from "@/lib/constants";
 import CalendarFilter from "./CalendarFilter";
@@ -12,10 +11,10 @@ export const metadata: Metadata = {
 	description: "Calendario completo de partidos del torneo round-robin.",
 };
 
-export const dynamic = "force-dynamic";
+/** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
+export const revalidate = 60;
 
 export default async function CalendarioPage() {
-	noStore();
 	const matches = await getMatches();
 
 	return (
