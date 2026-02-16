@@ -5,6 +5,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { getStats } from "@/lib/db";
 import { Users, CalendarDays, Clock, CheckCircle } from "lucide-react";
 import { CATEGORY_MALE, CATEGORY_FEMALE, STATUS_PENDING, STATUS_PLAYED, CATEGORY_LABELS } from "@/lib/constants";
+import ResetDataButton from "./ResetDataButton";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,7 @@ export default async function AdminDashboard() {
 					>
 						Registrar Resultados
 					</a>
+					<ResetDataButton />
 				</div>
 			</div>
 		</div>
