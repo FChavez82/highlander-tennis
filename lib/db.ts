@@ -19,6 +19,7 @@ import {
 	type Phase,
 	type BracketRound,
 } from "./constants";
+import { determineWinner, countSets } from "./score";
 
 /* ================================================================
    Types
@@ -64,14 +65,26 @@ export interface Standing {
    ================================================================ */
 
 /**
- * Get all players, optionally filtered by category.
- * Returns each player with counts of matches played & pending.
+ * Internal type for the raw match rows returned alongside standings.
+ * Used by callers (like /clasificacion) that need match data for streak computation
+ * without firing a separate query.
  */
-export async function getPlayers(category?: string): Promise<Standing[]> {
-	/* Build query — if category is provided, filter by it */
-	/* Only count round_robin matches for standings (bracket matches don't affect ranking) */
-	if (category) {
-		const { rows } = await sql`
+interface PlayersResult {
+	standings: Standing[];
+	matches: Match[];
+}
+
+/**
+ * Get all players with full standings, optionally filtered by category.
+ *
+ * Performs exactly ONE SQL query for player counts + ONE for played matches
+ * (the match query is filtered by category when provided, unlike the old version).
+ * Returns both standings AND the raw match rows so callers can reuse them.
+ */
+export async function getPlayersWithMatches(category?: string): Promise<PlayersResult> {
+	/* Query 1: Player counts — played & pending round-robin matches */
+	const { rows } = category
+		? await sql`
 			SELECT
 				p.id,
 				p.name,
@@ -85,41 +98,45 @@ export async function getPlayers(category?: string): Promise<Standing[]> {
 			WHERE p.category = ${category}
 			GROUP BY p.id, p.name, p.category
 			ORDER BY p.name;
+		`
+		: await sql`
+			SELECT
+				p.id,
+				p.name,
+				p.category,
+				COUNT(CASE WHEN m.status = 'jugado' THEN 1 END)::int     AS played,
+				COUNT(CASE WHEN m.status = 'pendiente' THEN 1 END)::int  AS pending
+			FROM players p
+			LEFT JOIN matches m
+				ON (m.player_a_id = p.id OR m.player_b_id = p.id)
+				AND COALESCE(m.phase, 'round_robin') = 'round_robin'
+			GROUP BY p.id, p.name, p.category
+			ORDER BY p.name;
 		`;
-		/* Calculate won/lost from a separate query for clarity */
-		return addWinLoss(rows as Standing[]);
-	}
 
-	const { rows } = await sql`
-		SELECT
-			p.id,
-			p.name,
-			p.category,
-			COUNT(CASE WHEN m.status = 'jugado' THEN 1 END)::int     AS played,
-			COUNT(CASE WHEN m.status = 'pendiente' THEN 1 END)::int  AS pending
-		FROM players p
-		LEFT JOIN matches m
-			ON (m.player_a_id = p.id OR m.player_b_id = p.id)
-			AND COALESCE(m.phase, 'round_robin') = 'round_robin'
-		GROUP BY p.id, p.name, p.category
-		ORDER BY p.name;
-	`;
-	return addWinLoss(rows as Standing[]);
-}
-
-/**
- * Adds won/lost counts to each player's standing.
- * A player "wins" a match when their total games won > opponent's total,
- * based on the score string (e.g. "6-4, 3-6, [10-7]").
- */
-async function addWinLoss(standings: Standing[]): Promise<Standing[]> {
-	/* Fetch all completed round_robin matches to compute wins/losses (bracket doesn't count) */
-	const { rows: matches } = await sql`
-		SELECT id, player_a_id, player_b_id, score
-		FROM matches
-		WHERE status = 'jugado' AND score IS NOT NULL
-		  AND COALESCE(phase, 'round_robin') = 'round_robin';
-	`;
+	/* Query 2: Played round-robin matches — now filtered by category when provided,
+	   so we don't fetch matches from the other category unnecessarily.
+	   Also fetches player names + date_played so callers can reuse for streaks. */
+	const { rows: matches } = category
+		? await sql`
+			SELECT m.id, m.player_a_id, m.player_b_id, m.score, m.date_played,
+				pa.name AS player_a_name, pb.name AS player_b_name
+			FROM matches m
+			LEFT JOIN players pa ON pa.id = m.player_a_id
+			LEFT JOIN players pb ON pb.id = m.player_b_id
+			WHERE m.status = 'jugado' AND m.score IS NOT NULL
+			  AND COALESCE(m.phase, 'round_robin') = 'round_robin'
+			  AND m.category = ${category};
+		`
+		: await sql`
+			SELECT m.id, m.player_a_id, m.player_b_id, m.score, m.date_played,
+				pa.name AS player_a_name, pb.name AS player_b_name
+			FROM matches m
+			LEFT JOIN players pa ON pa.id = m.player_a_id
+			LEFT JOIN players pb ON pb.id = m.player_b_id
+			WHERE m.status = 'jugado' AND m.score IS NOT NULL
+			  AND COALESCE(m.phase, 'round_robin') = 'round_robin';
+		`;
 
 	/* Build a map: playerId → { won, lost, sets_won, sets_lost } */
 	const record: Record<number, { won: number; lost: number; sets_won: number; sets_lost: number }> = {};
@@ -146,86 +163,27 @@ async function addWinLoss(standings: Standing[]): Promise<Standing[]> {
 		record[m.player_b_id].sets_lost += aSets;
 	}
 
-	return standings.map((s) => ({
+	const standings = (rows as Standing[]).map((s) => ({
 		...s,
 		won: record[s.id]?.won ?? 0,
 		lost: record[s.id]?.lost ?? 0,
 		sets_won: record[s.id]?.sets_won ?? 0,
 		sets_lost: record[s.id]?.sets_lost ?? 0,
 	}));
+
+	return { standings, matches: matches as Match[] };
 }
 
 /**
- * Counts the number of sets won by each side (player A / player B)
- * from a score string like "6-4, 3-6, [10-7]".
+ * Convenience wrapper — returns just standings (backwards-compatible with old callers).
  */
-function countSets(score: string): { aSets: number; bSets: number } {
-	const sets = score.split(",").map((s) => s.trim());
-	let aSets = 0;
-	let bSets = 0;
-
-	for (const set of sets) {
-		/* Super-tiebreak format: [10-7] */
-		const tbMatch = set.match(/\[(\d+)-(\d+)\]/);
-		if (tbMatch) {
-			const a = parseInt(tbMatch[1]);
-			const b = parseInt(tbMatch[2]);
-			if (a > b) aSets++;
-			else bSets++;
-			continue;
-		}
-
-		/* Normal set: "6-4" */
-		const parts = set.split("-").map((n) => parseInt(n.trim()));
-		if (parts.length === 2) {
-			if (parts[0] > parts[1]) aSets++;
-			else if (parts[1] > parts[0]) bSets++;
-		}
-	}
-
-	return { aSets, bSets };
+export async function getPlayers(category?: string): Promise<Standing[]> {
+	const { standings } = await getPlayersWithMatches(category);
+	return standings;
 }
 
-/**
- * Determines the winner of a match from the score string.
- *
- * Score format examples:
- * - "6-4, 6-2"           → player who won 2 sets
- * - "6-4, 3-6, [10-7]"   → player who won the super-tiebreak
- * - "6-4, 3-6, 7-5"      → player who won 2 of 3 sets
- *
- * Returns the winning player's ID.
- */
-export function determineWinner(
-	playerAId: number,
-	playerBId: number,
-	score: string
-): number {
-	const sets = score.split(",").map((s) => s.trim());
-	let aWins = 0;
-	let bWins = 0;
-
-	for (const set of sets) {
-		/* Super-tiebreak format: [10-7] */
-		const tbMatch = set.match(/\[(\d+)-(\d+)\]/);
-		if (tbMatch) {
-			const a = parseInt(tbMatch[1]);
-			const b = parseInt(tbMatch[2]);
-			if (a > b) aWins++;
-			else bWins++;
-			continue;
-		}
-
-		/* Normal set: "6-4" */
-		const parts = set.split("-").map((n) => parseInt(n.trim()));
-		if (parts.length === 2) {
-			if (parts[0] > parts[1]) aWins++;
-			else if (parts[1] > parts[0]) bWins++;
-		}
-	}
-
-	return aWins >= bWins ? playerAId : playerBId;
-}
+/* Re-export score utilities so existing imports from "@/lib/db" keep working */
+export { determineWinner, countSets } from "./score";
 
 /**
  * Create a new player and generate round-robin matches against
@@ -270,6 +228,33 @@ export async function createPlayer(
  */
 export async function deletePlayer(id: number): Promise<void> {
 	await sql`DELETE FROM players WHERE id = ${id};`;
+}
+
+/**
+ * Get a single player by ID.
+ */
+export async function getPlayerById(id: number): Promise<Player | null> {
+	const { rows } = await sql`SELECT * FROM players WHERE id = ${id};`;
+	return (rows[0] as Player) ?? null;
+}
+
+/**
+ * Get all matches for a specific player (both as player_a and player_b).
+ * Joins player names and orders by date descending.
+ */
+export async function getPlayerMatches(playerId: number): Promise<Match[]> {
+	const { rows } = await sql`
+		SELECT
+			m.*,
+			pa.name AS player_a_name,
+			pb.name AS player_b_name
+		FROM matches m
+		LEFT JOIN players pa ON pa.id = m.player_a_id
+		LEFT JOIN players pb ON pb.id = m.player_b_id
+		WHERE m.player_a_id = ${playerId} OR m.player_b_id = ${playerId}
+		ORDER BY m.date_played DESC NULLS LAST, m.id;
+	`;
+	return rows as Match[];
 }
 
 /* ================================================================
@@ -521,6 +506,30 @@ export async function advanceBracket(matchId: number): Promise<void> {
 		  AND phase = 'bracket'
 		  AND bracket_round = 'third_place';
 	`;
+}
+
+/* ================================================================
+   Recent matches (for homepage)
+   ================================================================ */
+
+/**
+ * Get the N most recently played matches with player names joined.
+ * Used on the homepage to show latest results.
+ */
+export async function getRecentMatches(limit: number): Promise<Match[]> {
+	const { rows } = await sql`
+		SELECT
+			m.*,
+			pa.name AS player_a_name,
+			pb.name AS player_b_name
+		FROM matches m
+		LEFT JOIN players pa ON pa.id = m.player_a_id
+		LEFT JOIN players pb ON pb.id = m.player_b_id
+		WHERE m.status = 'jugado' AND m.score IS NOT NULL
+		ORDER BY m.date_played DESC
+		LIMIT ${limit};
+	`;
+	return rows as Match[];
 }
 
 /* ================================================================

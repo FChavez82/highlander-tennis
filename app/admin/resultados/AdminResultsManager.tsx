@@ -21,6 +21,8 @@ import {
 	type Phase,
 	type BracketRound,
 } from "@/lib/constants";
+import { parseSets, getWinner, type ParsedSet } from "@/lib/score";
+import { safeDate } from "@/lib/utils";
 
 /* ── Per-set score entry state ── */
 type SetScores = {
@@ -69,43 +71,6 @@ function buildScore(s: SetScores): string {
 	return parts.join(", ");
 }
 
-/** Parsed set for score display grid */
-type ParsedSet = { a: number; b: number; isTiebreak: boolean };
-
-function parseSetsForDisplay(score: string): ParsedSet[] {
-	if (!score) return [];
-	return score.split(",").map((s) => {
-		const trimmed = s.trim();
-		const tbMatch = trimmed.match(/\[(\d+)-(\d+)\]/);
-		if (tbMatch) {
-			return { a: parseInt(tbMatch[1]), b: parseInt(tbMatch[2]), isTiebreak: true };
-		}
-		const parts = trimmed.split("-").map((n) => parseInt(n.trim()));
-		if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-			return { a: parts[0], b: parts[1], isTiebreak: false };
-		}
-		return null;
-	}).filter((s): s is ParsedSet => s !== null);
-}
-
-/** Determine winner: "a" if player A won more sets, "b" if player B, null if tie/unknown */
-function getWinner(sets: ParsedSet[]): "a" | "b" | null {
-	let aWins = 0;
-	let bWins = 0;
-	for (const s of sets) {
-		if (s.a > s.b) aWins++;
-		else if (s.b > s.a) bWins++;
-	}
-	if (aWins > bWins) return "a";
-	if (bWins > aWins) return "b";
-	return null;
-}
-
-/** Parse a date string safely, pinning to noon to avoid timezone day-shift */
-function safeDate(d: string | Date): Date {
-	const raw = typeof d === "string" ? d : d.toISOString();
-	return new Date(raw.slice(0, 10) + "T12:00:00");
-}
 
 /** Glass input style for score boxes */
 const scoreInputClass =
@@ -654,7 +619,7 @@ function PlayedMatchCard({
 	onReset: (matchId: number) => void;
 	onDelete: (matchId: number) => void;
 }) {
-	const displaySets = parseSetsForDisplay(match.score || "");
+	const displaySets = parseSets(match.score || "");
 	const winner = displaySets.length > 0 ? getWinner(displaySets) : null;
 
 	return (
