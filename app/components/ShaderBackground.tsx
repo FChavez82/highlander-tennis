@@ -132,6 +132,12 @@ const RESOLUTION_SCALE = 0.65;
 /* ── Resize debounce delay in ms ── */
 const RESIZE_DEBOUNCE_MS = 150;
 
+/* ── Target framerate cap ──
+   The animation is very slow (overallSpeed=0.2), so 30fps looks identical to 60fps
+   but cuts GPU work in half — significant battery savings on laptops. */
+const TARGET_FPS = 30;
+const FRAME_INTERVAL_MS = 1000 / TARGET_FPS;
+
 export default function ShaderBackground() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -215,9 +221,18 @@ export default function ShaderBackground() {
 		/* Track cumulative paused time so animation resumes smoothly (no time jump) */
 		let pausedAt = 0;
 		let totalPausedMs = 0;
+		/* Track last rendered frame time for FPS throttling */
+		let lastFrameTime = 0;
 
-		const render = () => {
+		const render = (now: number) => {
 			if (paused) return;
+
+			animId = requestAnimationFrame(render);
+
+			/* Skip this frame if not enough time has passed (30fps cap) */
+			const elapsed = now - lastFrameTime;
+			if (elapsed < FRAME_INTERVAL_MS) return;
+			lastFrameTime = now - (elapsed % FRAME_INTERVAL_MS);
 
 			const currentTime = (Date.now() - startTime - totalPausedMs) / 1000;
 
@@ -230,8 +245,6 @@ export default function ShaderBackground() {
 			gl.vertexAttribPointer(vertexPosition, 2, gl.FLOAT, false, 0, 0);
 			gl.enableVertexAttribArray(vertexPosition);
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-			animId = requestAnimationFrame(render);
 		};
 
 		const handleVisibility = () => {
@@ -247,6 +260,7 @@ export default function ShaderBackground() {
 					pausedAt = 0;
 				}
 				paused = false;
+				lastFrameTime = 0;
 				animId = requestAnimationFrame(render);
 			}
 		};

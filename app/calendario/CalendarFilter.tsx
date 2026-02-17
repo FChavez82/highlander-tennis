@@ -103,6 +103,18 @@ function buildCalendarGrid(year: number, month: number): CalendarCell[] {
 	return cells;
 }
 
+/** Format a date key as "LUNES, 16 FEBRERO" (all caps, no "de") */
+const DAY_NAMES = [
+	"DOMINGO", "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO",
+];
+function formatDayHeader(dateKey: string): string {
+	const d = new Date(dateKey + "T12:00:00");
+	const dayName = DAY_NAMES[d.getDay()];
+	const dayNum = d.getDate();
+	const monthName = MONTH_NAMES[d.getMonth()].toUpperCase();
+	return `${dayName}, ${dayNum} ${monthName}`;
+}
+
 /** Get today's date as YYYY-MM-DD */
 function todayKey(): string {
 	const d = new Date();
@@ -294,14 +306,10 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 
 			{/* ── Selected day detail panel ── */}
 			{selectedDay && selectedMatches.length > 0 && (
-				<div className="grid gap-3">
-					<p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-						{new Date(selectedDay + "T12:00:00").toLocaleDateString("es-ES", {
-							weekday: "long",
-							day: "numeric",
-							month: "long",
-						})}
-					</p>
+				<div className="glass rounded-2xl p-5">
+					<h3 className="mb-3 font-display text-base font-bold uppercase tracking-wide text-foreground">
+						{formatDayHeader(selectedDay)}
+					</h3>
 					<div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,max-content))] gap-3">
 						{selectedMatches.map((match) => (
 							<MatchRow key={match.id} match={match} />
@@ -312,10 +320,10 @@ export default function CalendarFilter({ matches }: { matches: Match[] }) {
 
 			{/* ── Pending matches (no date_played) ── */}
 			{pending.length > 0 && (
-				<div className="grid gap-3">
-					<p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+				<div className="glass rounded-2xl p-5">
+					<h3 className="mb-3 font-display text-base font-bold uppercase tracking-wide text-foreground">
 						Pendientes ({pending.length})
-					</p>
+					</h3>
 					<div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,max-content))] gap-3">
 						{pending.map((match) => (
 							<MatchRow key={match.id} match={match} />
