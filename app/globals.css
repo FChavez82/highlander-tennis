@@ -117,6 +117,27 @@
 	}
 }
 
+/* ── Gradient background ───────────────────────────────────── */
+/* Replaces the WebGL shader — pure CSS, zero GPU cost.
+   Layered radial gradients using the site palette:
+   teal (primary), gold (accent), blue (cat-male), dark base. */
+.gradient-bg {
+	position: fixed;
+	inset: 0;
+	z-index: -10;
+	background:
+		/* Teal glow — top-left */
+		radial-gradient(ellipse 80% 60% at 15% 10%, hsl(160 65% 30% / 0.25) 0%, transparent 60%),
+		/* Gold glow — top-right */
+		radial-gradient(ellipse 60% 50% at 85% 15%, hsl(42 80% 45% / 0.12) 0%, transparent 55%),
+		/* Blue glow — bottom-left */
+		radial-gradient(ellipse 70% 55% at 10% 90%, hsl(207 90% 40% / 0.15) 0%, transparent 55%),
+		/* Teal secondary — bottom-right */
+		radial-gradient(ellipse 50% 40% at 80% 85%, hsl(160 65% 25% / 0.18) 0%, transparent 50%),
+		/* Dark base gradient */
+		linear-gradient(180deg, hsl(210 30% 7%) 0%, hsl(210 30% 5%) 100%);
+}
+
 /* ── Focus styles ───────────────────────────────────────────── */
 :focus-visible {
 	outline: 2px solid hsl(var(--ring));

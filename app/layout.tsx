@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Oswald } from "next/font/google";
 import "./globals.css";
 import NavBar from "./components/NavBar";
-import ShaderBackground from "./components/ShaderBackground";
 import Providers from "./components/Providers";
 import { Trophy } from "lucide-react";
 import { TOURNAMENT_NAME, SITE_URL } from "@/lib/constants";
@@ -54,8 +53,8 @@ export default function RootLayout({
 						Ir al contenido principal
 					</a>
 
-					{/* Animated WebGL shader background */}
-					<ShaderBackground />
+					{/* Static gradient background — zero GPU cost */}
+					<div className="gradient-bg" aria-hidden="true" />
 
 					<NavBar />
 
