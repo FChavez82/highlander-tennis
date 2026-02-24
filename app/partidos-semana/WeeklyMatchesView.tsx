@@ -71,16 +71,16 @@ export default function WeeklyMatchesView({
 	return (
 		<div className="flex flex-col gap-6">
 			<h1 className="font-display text-2xl font-bold uppercase tracking-wider text-foreground">
-				Partidos de la Semana
+				Partidos por Ronda
 			</h1>
 
 			{/* Empty state */}
 			{weeks.length === 0 && (
 				<div className="glass rounded-2xl p-8 text-center text-muted-foreground">
 					<Calendar className="mx-auto mb-3 h-8 w-8 opacity-50" />
-					<p>No hay semanas publicadas aun.</p>
+					<p>No hay rondas publicadas aun.</p>
 					<p className="mt-1 text-sm">
-						Los partidos apareceran aqui cuando el administrador publique el calendario.
+						Los partidos apareceran aqui cuando el administrador publique la siguiente ronda.
 					</p>
 				</div>
 			)}
@@ -100,7 +100,7 @@ export default function WeeklyMatchesView({
 								}`}
 							>
 								<Calendar className="h-3.5 w-3.5" />
-								Semana {week.week_number}: {formatDateRange(week.start_date, week.end_date)}
+								Ronda {week.week_number}: {formatDateRange(week.start_date, week.end_date)}
 							</button>
 						))}
 					</div>
@@ -192,7 +192,7 @@ export default function WeeklyMatchesView({
 					) : (
 						selectedWeek && (
 							<div className="glass rounded-2xl p-6 text-center text-muted-foreground">
-								No hay partidos de {CATEGORY_LABELS[selectedCategory].full} esta semana.
+								No hay partidos de {CATEGORY_LABELS[selectedCategory].full} esta ronda.
 							</div>
 						)
 					)}
@@ -203,7 +203,7 @@ export default function WeeklyMatchesView({
 							<Coffee className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
 							<div className="text-sm">
 								<span className="font-semibold text-foreground">
-									Descansan esta semana:{" "}
+									Descansan esta ronda:{" "}
 								</span>
 								<span className="text-muted-foreground">
 									{byePlayers.map((a) => a.player_name).join(", ")}

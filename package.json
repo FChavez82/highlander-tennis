@@ -8,7 +8,9 @@
 		"start": "next start",
 		"lint": "next lint",
 		"setup-db": "npx tsx scripts/setup-db.ts",
-		"seed": "npx tsx scripts/seed.ts"
+		"seed": "npx tsx scripts/seed.ts",
+		"seed-swiss": "npx tsx --tsconfig tsconfig.json scripts/seed-swiss.ts",
+		"seed-swiss-full": "npx tsx --tsconfig tsconfig.json scripts/seed-swiss-full.ts"
 	},
 	"dependencies": {
 		"@vercel/postgres": "^0.10.0",

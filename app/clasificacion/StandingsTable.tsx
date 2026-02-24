@@ -175,7 +175,7 @@ export default function StandingsTable({
 				<span>Dif = Diferencia de sets</span>
 				<span className="flex items-center gap-1.5">
 					<span className="inline-block h-2 w-2 rounded-full bg-emerald-400/60" />
-					Top {BRACKET_QUALIFIERS} clasifican a Fase 2
+					Top {BRACKET_QUALIFIERS} clasifican a la Fase Final
 				</span>
 			</div>
 		</div>

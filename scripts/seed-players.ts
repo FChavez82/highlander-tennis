@@ -1,5 +1,6 @@
 /**
- * Seed script — clears all data and creates 20 Male + 25 Female players.
+ * Seed script — clears all data and creates players from "Interno Colinas - Tentativo.csv".
+ * 28 Varonil (M) + 22 Femenil (F) = 50 players total.
  * Usage: npx tsx scripts/seed-players.ts
  */
 import { config } from "dotenv";
@@ -8,21 +9,23 @@ config({ path: ".env.local" });
 import { sql } from "@vercel/postgres";
 
 const MALE_NAMES = [
-	"Carlos Martinez", "Diego Rivera", "Fernando Lopez", "Gabriel Torres",
-	"Hugo Sanchez", "Ivan Morales", "Javier Gutierrez", "Kevin Hernandez",
-	"Luis Ramirez", "Miguel Castro", "Nicolas Vargas", "Oscar Mendoza",
-	"Pablo Fuentes", "Rafael Delgado", "Santiago Rojas", "Tomas Aguilar",
-	"Victor Navarro", "Walter Paredes", "Xavier Reyes", "Andres Soto",
+	"Francisco Chavez", "Francisco Madrid", "Tasuko Sato", "Jesus Salomon",
+	"Yuichi Castro", "Pablos Flores", "Constantino Dimopulos", "Miguel Leon",
+	"Edel Flores", "Raul Camacho", "Roberto", "Daniel Elizabeth",
+	"Fernando Franco", "Olga Perez", "Angel Conde", "Jesus E Alvarez (?)",
+	"Juan pablo jr", "Juan pablo", "Jorge Inzunza", "Daniel esposo Ofe",
+	"Raul Camacho Jr", "Fernando Esquer", "Francisco Esquer", "Ernesto Esquer",
+	"Checo Padilla", "Luis Enrique Parra",
+	"Juan M Sato", "Santiago Sato",
 ];
 
 const FEMALE_NAMES = [
-	"Ana Garcia", "Beatriz Flores", "Camila Ortiz", "Daniela Ruiz",
-	"Elena Jimenez", "Fernanda Diaz", "Gabriela Perez", "Helena Cruz",
-	"Isabella Molina", "Julia Romero", "Karla Herrera", "Lucia Castillo",
-	"Maria Vega", "Natalia Guerrero", "Olivia Espinoza", "Patricia Rios",
-	"Renata Cordova", "Sofia Medina", "Teresa Salazar", "Valentina Acosta",
-	"Ximena Figueroa", "Yolanda Campos", "Zoe Contreras", "Andrea Pacheco",
-	"Bianca Marquez",
+	"Daniela Rochin", "Liz Montaño", "Carolina Parra", "Lucia",
+	"Sara Tirado", "Celia", "Italia", "Silvia",
+	"Scarlett", "Karina", "Susana", "Elizabeth",
+	"Argelia", "Lorena", "Ale Luna", "Ofelia",
+	"Naomi Bernal", "Fernanda Orozco", "Wendy", "Mia",
+	"Cristina Padilla", "Emma Parra",
 ];
 
 async function seed() {

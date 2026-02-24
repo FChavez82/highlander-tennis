@@ -1,9 +1,12 @@
 /**
  * /resultados — Public results page showing completed matches.
- * Shows Fase 1 (Round Robin) and Fase 2 (Elimination Brackets) via tabs.
+ *
+ * Swiss format: matches are grouped by schedule week (= Swiss round).
+ * Each round shows match results + cumulative standings for the category.
+ * Phase 2 (bracket) tab appears once bracket matches exist in the DB.
  */
 import type { Metadata } from "next";
-import { getMatches } from "@/lib/db";
+import { getMatches, getScheduleWeeks } from "@/lib/db";
 import { STATUS_PLAYED, PHASE_ROUND_ROBIN, PHASE_BRACKET, TOURNAMENT_NAME } from "@/lib/constants";
 import ResultsFilter from "./ResultsFilter";
 
@@ -17,18 +20,20 @@ export const revalidate = 60;
 
 export default async function ResultadosPage() {
 
-	/* Fetch round-robin played matches and ALL bracket matches (played + pending) */
-	const [roundRobinMatches, bracketMatches] = await Promise.all([
+	/* Fetch Swiss (round_robin phase) played matches, bracket matches, and week list */
+	const [swissMatches, bracketMatches, weeks] = await Promise.all([
 		getMatches(undefined, STATUS_PLAYED, PHASE_ROUND_ROBIN),
 		getMatches(undefined, undefined, PHASE_BRACKET),
+		getScheduleWeeks(),
 	]);
 
 	return (
 		<div className="grid gap-5">
 			<h1 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground">Resultados</h1>
 			<ResultsFilter
-				roundRobinMatches={roundRobinMatches}
+				swissMatches={swissMatches}
 				bracketMatches={bracketMatches}
+				weeks={weeks}
 			/>
 		</div>
 	);
