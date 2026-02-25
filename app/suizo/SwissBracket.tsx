@@ -23,7 +23,7 @@ import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS } from "@/lib/constants
 
 const COL_W   = 164;  /* px — width of each round column                  */
 const COL_GAP = 10;   /* px — horizontal gap between columns               */
-const BOX_GAP = 4;    /* px — vertical gap between boxes in the same column */
+const BOX_GAP = 12;   /* px — vertical gap between boxes in the same column */
 
 /* ── Data types ── */
 
