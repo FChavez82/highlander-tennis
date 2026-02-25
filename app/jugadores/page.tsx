@@ -3,7 +3,7 @@
  * Tab switching uses URL search params (?cat=M / ?cat=F) for deep-linking.
  */
 import type { Metadata } from "next";
-import { getPlayers, type Standing } from "@/lib/db";
+import { getPlayers, getPlayerCounts, type Standing } from "@/lib/db";
 import { CATEGORY_MALE, CATEGORY_FEMALE, TOURNAMENT_NAME, type Category } from "@/lib/constants";
 import CategoryTabs from "@/app/components/CategoryTabs";
 import PlayerTabs from "./PlayerTabs";
@@ -25,25 +25,22 @@ export default async function JugadoresPage({
 	const cat: Category =
 		searchParams.cat === CATEGORY_FEMALE ? CATEGORY_FEMALE : CATEGORY_MALE;
 
-	const [masculino, femenino] = await Promise.all([
-		getPlayers(CATEGORY_MALE),
-		getPlayers(CATEGORY_FEMALE),
+	/* Fetch counts (cheap) for tab labels + full player list only for the selected category */
+	const [counts, players] = await Promise.all([
+		getPlayerCounts(),
+		getPlayers(cat),
 	]);
 
 	/* Sort by wins descending */
 	const sortByWins = (a: Standing, b: Standing) => b.won - a.won || a.name.localeCompare(b.name);
-	masculino.sort(sortByWins);
-	femenino.sort(sortByWins);
-
-	/* Pick the selected category's data */
-	const players = cat === CATEGORY_MALE ? masculino : femenino;
+	players.sort(sortByWins);
 
 	return (
 		<div className="grid gap-5">
 			<h1 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground">Jugadores</h1>
 			<CategoryTabs
-				maleCount={masculino.length}
-				femaleCount={femenino.length}
+				maleCount={counts.male}
+				femaleCount={counts.female}
 			/>
 			<PlayerTabs players={players} />
 		</div>

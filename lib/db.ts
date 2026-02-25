@@ -203,6 +203,25 @@ export async function getPlayers(category?: string): Promise<Standing[]> {
 	return standings;
 }
 
+/**
+ * Lightweight count-only query — returns the number of players per category.
+ * Used by CategoryTabs so pages don't need to fetch full standings for both
+ * categories just to display the tab counts.
+ */
+export async function getPlayerCounts(): Promise<{ male: number; female: number }> {
+	const { rows } = await sql`
+		SELECT category, COUNT(*)::int AS count
+		FROM players
+		GROUP BY category;
+	`;
+	let male = 0, female = 0;
+	for (const row of rows) {
+		if (row.category === "M") male = row.count;
+		if (row.category === "F") female = row.count;
+	}
+	return { male, female };
+}
+
 /* Re-export score utilities so existing imports from "@/lib/db" keep working */
 export { determineWinner, countSets } from "./score";
 

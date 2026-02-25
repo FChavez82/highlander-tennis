@@ -4,7 +4,7 @@
  * Sort order: points (wins) desc → set difference desc → name asc.
  */
 import type { Metadata } from "next";
-import { getPlayersWithMatches, sortStandings, type Match } from "@/lib/db";
+import { getPlayersWithMatches, getPlayerCounts, sortStandings, type Match } from "@/lib/db";
 import { determineWinner } from "@/lib/score";
 import { CATEGORY_MALE, CATEGORY_FEMALE, TOURNAMENT_NAME, type Category } from "@/lib/constants";
 import CategoryTabs from "@/app/components/CategoryTabs";
@@ -70,23 +70,17 @@ export default async function ClasificacionPage({
 	const cat: Category =
 		searchParams.cat === CATEGORY_FEMALE ? CATEGORY_FEMALE : CATEGORY_MALE;
 
-	/* Fetch both categories for counts (tabs need both), but only sort/streak the selected one */
-	const [maleResult, femaleResult] = await Promise.all([
-		getPlayersWithMatches(CATEGORY_MALE),
-		getPlayersWithMatches(CATEGORY_FEMALE),
+	/* Fetch counts (cheap) for tab labels + full standings only for the selected category */
+	const [counts, result] = await Promise.all([
+		getPlayerCounts(),
+		getPlayersWithMatches(cat),
 	]);
 
-	const maleStandings = maleResult.standings;
-	const femaleStandings = femaleResult.standings;
-	maleStandings.sort(sortStandings);
-	femaleStandings.sort(sortStandings);
+	const players = result.standings;
+	players.sort(sortStandings);
 
-	/* Pick the selected category's data */
-	const players = cat === CATEGORY_MALE ? maleStandings : femaleStandings;
-	const matches = cat === CATEGORY_MALE ? maleResult.matches : femaleResult.matches;
-
-	/* Compute streaks only for the selected category */
-	const streaks = computeStreaks(matches);
+	/* Compute streaks for the selected category's matches */
+	const streaks = computeStreaks(result.matches);
 
 	return (
 		<div className="grid gap-5">
@@ -94,8 +88,8 @@ export default async function ClasificacionPage({
 				Clasificacion
 			</h1>
 			<CategoryTabs
-				maleCount={maleStandings.length}
-				femaleCount={femaleStandings.length}
+				maleCount={counts.male}
+				femaleCount={counts.female}
 			/>
 			<StandingsTable players={players} streaks={streaks} />
 		</div>
