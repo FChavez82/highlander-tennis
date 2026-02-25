@@ -22,6 +22,8 @@ const NAV_LINKS = [
 	{ href: "/calendario", label: "Calendario" },
 	{ href: "/partidos-semana", label: "Ronda" },
 	{ href: "/suizo", label: "Suizo" },
+	{ href: "/round-robin", label: "Round Robin" },
+	{ href: "/grupos", label: "Grupos" },
 ];
 
 /** Inactive pill style */
