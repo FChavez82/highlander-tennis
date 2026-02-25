@@ -24,6 +24,7 @@ import {
 	CATEGORY_MALE,
 	CATEGORY_FEMALE,
 	CATEGORY_LABELS,
+	STATUS_PLAYED,
 	BRACKET_ROUND_SEMIFINAL,
 	BRACKET_ROUND_FINAL,
 	BRACKET_ROUND_THIRD_PLACE,
@@ -455,7 +456,7 @@ function ResultCard({ match }: { match: Match }) {
 function BracketMatchNode({ match, roundLabel }: { match: Match; roundLabel: string }) {
 	const sets = parseSets(match.score || "");
 	const winner = sets.length > 0 ? getWinner(sets) : null;
-	const isPlayed = match.status === "jugado" && match.score;
+	const isPlayed = match.status === STATUS_PLAYED && match.score;
 
 	return (
 		<div className="glass rounded-2xl p-3 w-full min-w-[14rem]">

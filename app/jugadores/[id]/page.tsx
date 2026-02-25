@@ -13,6 +13,9 @@ import { determineWinner, countSets } from "@/lib/score";
 import { safeDate, isRecent } from "@/lib/utils";
 import {
 	CATEGORY_LABELS,
+	STATUS_PLAYED,
+	STATUS_PENDING,
+	PHASE_BRACKET,
 	PHASE_LABELS,
 	BRACKET_ROUND_LABELS,
 	categoryBadgeClass,
@@ -50,7 +53,7 @@ interface HeadToHead {
 }
 
 function computeHeadToHead(playerId: number, matches: Match[]): HeadToHead[] {
-	const played = matches.filter((m) => m.status === "jugado" && m.score);
+	const played = matches.filter((m) => m.status === STATUS_PLAYED && m.score);
 	const map = new Map<number, HeadToHead>();
 
 	for (const m of played) {
@@ -96,7 +99,7 @@ export default async function PlayerProfilePage({
 	if (!player) notFound();
 
 	/* Compute overall record */
-	const playedMatches = matches.filter((m) => m.status === "jugado" && m.score);
+	const playedMatches = matches.filter((m) => m.status === STATUS_PLAYED && m.score);
 	let wins = 0;
 	let losses = 0;
 	let setsWon = 0;
@@ -113,7 +116,7 @@ export default async function PlayerProfilePage({
 		setsLost += isA ? setCounts.bSets : setCounts.aSets;
 	}
 
-	const pendingMatches = matches.filter((m) => m.status === "pendiente");
+	const pendingMatches = matches.filter((m) => m.status === STATUS_PENDING);
 	const headToHead = computeHeadToHead(playerId, matches);
 	const setDiff = setsWon - setsLost;
 
@@ -197,14 +200,14 @@ export default async function PlayerProfilePage({
 										const isA = m.player_a_id === playerId;
 										const opponentName = isA ? m.player_b_name : m.player_a_name;
 										const opponentId = isA ? m.player_b_id : m.player_a_id;
-										const isPlayed = m.status === "jugado" && m.score;
+										const isPlayed = m.status === STATUS_PLAYED && m.score;
 										const didWin = isPlayed
 											? determineWinner(m.player_a_id, m.player_b_id, m.score!) === playerId
 											: null;
 
 										/* Phase label */
 										const phaseLabel =
-											m.phase === "bracket" && m.bracket_round
+											m.phase === PHASE_BRACKET && m.bracket_round
 												? BRACKET_ROUND_LABELS[m.bracket_round as BracketRound]
 												: null;
 

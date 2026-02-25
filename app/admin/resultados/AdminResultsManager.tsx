@@ -8,6 +8,7 @@ import {
 	CATEGORY_MALE,
 	CATEGORY_FEMALE,
 	CATEGORY_LABELS,
+	STATUS_PLAYED,
 	PHASE_ROUND_ROBIN,
 	PHASE_BRACKET,
 	PHASE_LABELS,
@@ -454,7 +455,7 @@ function AdminBracketPhase({
 							</h2>
 							<div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,max-content))] gap-3">
 								{matches.map((match) => {
-									const isPlayed = match.status === "jugado" && match.score;
+									const isPlayed = match.status === STATUS_PLAYED && match.score;
 									if (isPlayed) {
 										return (
 											<PlayedMatchCard

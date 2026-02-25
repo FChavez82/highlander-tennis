@@ -17,7 +17,7 @@
 import { useState, useMemo } from "react";
 import type { Match, ScheduleWeek } from "@/lib/db";
 import { determineWinner } from "@/lib/db";
-import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS } from "@/lib/constants";
+import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS, type Category } from "@/lib/constants";
 
 /* ── Layout constants ── */
 
@@ -47,7 +47,7 @@ interface BracketCell {
 function buildColumns(
 	allMatches: Match[],
 	weeks: ScheduleWeek[],
-	category: "M" | "F",
+	category: Category,
 ): BracketCell[][] {
 	/* Filter + map week_id → chronological round number */
 	const sortedWeeks = [...weeks].sort((a, b) => a.week_number - b.week_number);
@@ -217,7 +217,7 @@ export default function SwissBracket({
 	swissMatches: Match[];
 	weeks: ScheduleWeek[];
 }) {
-	const [category, setCategory] = useState<"M" | "F">(CATEGORY_MALE);
+	const [category, setCategory] = useState<Category>(CATEGORY_MALE);
 
 	const columns = useMemo(
 		() => buildColumns(swissMatches, weeks, category),

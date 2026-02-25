@@ -19,6 +19,8 @@ import {
 	CATEGORY_MALE,
 	CATEGORY_FEMALE,
 	CATEGORY_LABELS,
+	STATUS_PLAYED,
+	STATUS_PENDING,
 	STATUS_CANCELLED,
 	WEEK_STATUS_DRAFT,
 	WEEK_STATUS_PUBLISHED,
@@ -349,12 +351,12 @@ export default function AdminScheduleManager({
 													)}
 												</div>
 												<div className="flex items-center gap-2">
-													{m.status === "jugado" && m.score && (
+													{m.status === STATUS_PLAYED && m.score && (
 														<span className="font-mono text-xs text-muted-foreground">
 															{m.score}
 														</span>
 													)}
-													{m.status === "pendiente" && (
+													{m.status === STATUS_PENDING && (
 														<button
 															onClick={() => handleCancelMatch(m.id)}
 															disabled={cancellingMatch === m.id}
