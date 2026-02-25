@@ -22,34 +22,20 @@ import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS } from "@/lib/constants
 
 /* ── Layout constants ── */
 
+/*
+ * Fixed column height — tall enough that boxes in the final round (6 boxes)
+ * each have room for ~4 match rows without needing internal scroll,
+ * while keeping the overall bracket visually proportionate.
+ *
+ * 840px ÷ 6 boxes = 140px per box → fits header(30px) + 4×match(26px) = 134px ✓
+ * Round-1 box uses ~400px of its 840px — the gap is intentional (it's a bracket diagram).
+ */
+const COL_H    = 840;  /* px — total drawable height for each round column */
 const COL_W    = 164;  /* px — width of each round column                  */
 const COL_GAP  = 10;   /* px — horizontal gap between columns               */
 const BOX_GAP  = 4;    /* px — vertical gap between boxes in the same column */
-const HEADER_H = 32;   /* px — height of the record badge header row        */
-const ROW_H    = 34;   /* px — height of each match entry row               */
-const SAFETY   = 8;    /* px — extra breathing room per box                 */
-
-/**
- * Compute the minimum column height so that NO box needs internal scroll.
- *
- * For each column r (which has `cells.length` equal-height boxes):
- *   box height = COL_H / cells.length
- *   required   = HEADER_H + max_matches_in_this_column * ROW_H + BOX_GAP + SAFETY
- *
- * We need box_height >= required, i.e. COL_H >= cells.length * required.
- * Take the max across all columns.
- */
-function computeColH(columns: BracketCell[][]): number {
-	let max = 480; /* minimum so the bracket doesn't look squashed */
-	for (const cells of columns) {
-		const n = cells.length;
-		for (const cell of cells) {
-			const needed = n * (HEADER_H + cell.matches.length * ROW_H + BOX_GAP + SAFETY);
-			if (needed > max) max = needed;
-		}
-	}
-	return max;
-}
+const HEADER_H = 30;   /* px — height of the record badge header row        */
+const ROW_H    = 26;   /* px — height of each match entry row               */
 
 /* ── Data types ── */
 
@@ -229,7 +215,7 @@ function RecordBox({
 			{cell.matches.map((m) => (
 				<div
 					key={m.id}
-					className="border-b border-[hsl(215_20%_40%/0.08)] px-2 py-[3px]"
+					className="border-b border-[hsl(215_20%_40%/0.08)] px-2 py-[2px]"
 					style={{ height: ROW_H }}
 				>
 					{/* Winner line */}
@@ -269,9 +255,6 @@ export default function SwissBracket({
 		() => buildColumns(swissMatches, weeks, category),
 		[swissMatches, weeks, category],
 	);
-
-	/* Dynamic height — tall enough that no box needs internal scrolling */
-	const colH = useMemo(() => computeColH(columns), [columns]);
 
 	if (columns.length === 0) {
 		return (
@@ -322,26 +305,26 @@ export default function SwissBracket({
 					</div>
 
 					{/* Columns */}
-					<div className="flex" style={{ gap: COL_GAP, height: colH }}>
+					<div className="flex" style={{ gap: COL_GAP, height: COL_H }}>
 						{columns.map((cells, colIdx) => {
 							/*
 							 * Vertical positioning:
 							 * Column r has `numCells` equal-height boxes.
 							 * Box k (0 = top = best record) is at:
-							 *   top    = k * (colH / numCells)
-							 *   height = colH / numCells
+							 *   top    = k * (COL_H / numCells)
+							 *   height = COL_H / numCells
 							 *
-							 * colH is computed dynamically so every box is tall enough
+							 * COL_H is computed dynamically so every box is tall enough
 							 * to show all its match rows without internal scrolling.
 							 */
 							const numCells = cells.length;
-							const boxH = colH / numCells;
+							const boxH = COL_H / numCells;
 
 							return (
 								<div
 									key={colIdx}
 									className="relative shrink-0"
-									style={{ width: COL_W, height: colH }}
+									style={{ width: COL_W, height: COL_H }}
 								>
 									{cells.map((cell, k) => (
 										<RecordBox
