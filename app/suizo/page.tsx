@@ -7,7 +7,7 @@
  */
 import type { Metadata } from "next";
 import { getMatches, getScheduleWeeks } from "@/lib/db";
-import { STATUS_PLAYED, PHASE_ROUND_ROBIN, PHASE_BRACKET, TOURNAMENT_NAME } from "@/lib/constants";
+import { STATUS_PLAYED, PHASE_ROUND_ROBIN, PHASE_BRACKET, TOURNAMENT_NAME, REVALIDATE_SECONDS } from "@/lib/constants";
 import ResultsFilter from "@/app/resultados/ResultsFilter";
 import SwissBracket from "./SwissBracket";
 
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 	description: "Resultados y posiciones del torneo en sistema suizo.",
 };
 
-export const revalidate = 60;
+export const revalidate = REVALIDATE_SECONDS;
 
 export default async function SuizoPage() {
 	const [swissMatches, bracketMatches, weeks] = await Promise.all([

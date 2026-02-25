@@ -154,3 +154,11 @@ export const SITE_URL =
 	process.env.VERCEL_URL
 		? `https://${process.env.VERCEL_URL}`
 		: "http://localhost:3000";
+
+/**
+ * ISR revalidation interval for public pages.
+ * Production: cache for 60 s so the DB isn't hit on every request.
+ * Development: always fetch fresh so changes are visible immediately.
+ */
+export const REVALIDATE_SECONDS =
+	process.env.NODE_ENV === "production" ? 60 : 0;

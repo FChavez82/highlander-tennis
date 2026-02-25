@@ -3,7 +3,7 @@
  */
 import type { Metadata } from "next";
 import { getMatches } from "@/lib/db";
-import { TOURNAMENT_NAME } from "@/lib/constants";
+import { TOURNAMENT_NAME, REVALIDATE_SECONDS } from "@/lib/constants";
 import CalendarFilter from "./CalendarFilter";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 /** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
-export const revalidate = 60;
+export const revalidate = REVALIDATE_SECONDS;
 
 export default async function CalendarioPage() {
 	const matches = await getMatches();

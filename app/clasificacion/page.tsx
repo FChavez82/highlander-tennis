@@ -6,7 +6,7 @@
 import type { Metadata } from "next";
 import { getPlayersWithMatches, getPlayerCounts, sortStandings, type Match } from "@/lib/db";
 import { determineWinner } from "@/lib/score";
-import { CATEGORY_MALE, CATEGORY_FEMALE, TOURNAMENT_NAME, type Category } from "@/lib/constants";
+import { CATEGORY_MALE, CATEGORY_FEMALE, TOURNAMENT_NAME, REVALIDATE_SECONDS, type Category } from "@/lib/constants";
 import CategoryTabs from "@/app/components/CategoryTabs";
 import StandingsTable from "./StandingsTable";
 
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 /** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
-export const revalidate = 60;
+export const revalidate = REVALIDATE_SECONDS;
 
 /**
  * Compute current win streaks for all players from played matches.

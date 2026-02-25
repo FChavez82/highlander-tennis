@@ -5,11 +5,11 @@
  */
 import { getScheduleWeeks, getMatchesByWeek, getWeekAvailability } from "@/lib/db";
 import type { ScheduleWeek, Match, PlayerAvailability } from "@/lib/db";
-import { WEEK_STATUS_PUBLISHED, WEEK_STATUS_COMPLETED } from "@/lib/constants";
+import { WEEK_STATUS_PUBLISHED, WEEK_STATUS_COMPLETED, REVALIDATE_SECONDS } from "@/lib/constants";
 import WeeklyMatchesView from "./WeeklyMatchesView";
 
 /** Revalidate every 60 seconds — players see cached data, DB hit at most once/min */
-export const revalidate = 60;
+export const revalidate = REVALIDATE_SECONDS;
 
 /** Week data bundled with matches and availability for the view */
 export interface PublicWeekData extends ScheduleWeek {

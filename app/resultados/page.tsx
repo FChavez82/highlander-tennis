@@ -7,7 +7,7 @@
  */
 import type { Metadata } from "next";
 import { getMatches, getScheduleWeeks } from "@/lib/db";
-import { STATUS_PLAYED, PHASE_ROUND_ROBIN, PHASE_BRACKET, TOURNAMENT_NAME } from "@/lib/constants";
+import { STATUS_PLAYED, PHASE_ROUND_ROBIN, PHASE_BRACKET, TOURNAMENT_NAME, REVALIDATE_SECONDS } from "@/lib/constants";
 import ResultsFilter from "./ResultsFilter";
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 /** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
-export const revalidate = 60;
+export const revalidate = REVALIDATE_SECONDS;
 
 export default async function ResultadosPage() {
 

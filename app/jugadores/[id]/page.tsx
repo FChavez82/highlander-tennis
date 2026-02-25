@@ -17,12 +17,13 @@ import {
 	BRACKET_ROUND_LABELS,
 	categoryBadgeClass,
 	TOURNAMENT_NAME,
+	REVALIDATE_SECONDS,
 	type Category,
 	type BracketRound,
 } from "@/lib/constants";
 
 /** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
-export const revalidate = 60;
+export const revalidate = REVALIDATE_SECONDS;
 
 export async function generateMetadata({
 	params,

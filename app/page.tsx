@@ -9,10 +9,11 @@ import {
 	CATEGORY_FEMALE,
 	STATUS_PENDING,
 	STATUS_PLAYED,
+	REVALIDATE_SECONDS,
 } from "@/lib/constants";
 
 /** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
-export const revalidate = 60;
+export const revalidate = REVALIDATE_SECONDS;
 
 export default async function Home() {
 	const [stats, recentMatches] = await Promise.all([getStats(), getRecentMatches(3)]);

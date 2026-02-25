@@ -4,7 +4,7 @@
  */
 import type { Metadata } from "next";
 import { getPlayers, getPlayerCounts, type Standing } from "@/lib/db";
-import { CATEGORY_MALE, CATEGORY_FEMALE, TOURNAMENT_NAME, type Category } from "@/lib/constants";
+import { CATEGORY_MALE, CATEGORY_FEMALE, TOURNAMENT_NAME, REVALIDATE_SECONDS, type Category } from "@/lib/constants";
 import CategoryTabs from "@/app/components/CategoryTabs";
 import PlayerTabs from "./PlayerTabs";
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 /** Revalidate every 60 seconds — public viewers see cached data, DB is hit at most once/min */
-export const revalidate = 60;
+export const revalidate = REVALIDATE_SECONDS;
 
 export default async function JugadoresPage({
 	searchParams,
