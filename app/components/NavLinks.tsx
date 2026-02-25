@@ -20,9 +20,7 @@ const NAV_LINKS = [
 	{ href: "/clasificacion", label: "Clasificacion" },
 	{ href: "/resultados", label: "Resultados" },
 	{ href: "/calendario", label: "Calendario" },
-	{ href: "/partidos-semana", label: "Ronda" },
 	{ href: "/suizo", label: "Suizo" },
-	{ href: "/round-robin", label: "Round Robin" },
 	{ href: "/grupos", label: "Grupos" },
 ];
 
