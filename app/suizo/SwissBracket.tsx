@@ -3,12 +3,11 @@
 /**
  * SwissBracket — classic Swiss bracket flowchart.
  *
- * Layout mirrors the reference image:
+ * Layout:
  *   - Each column = one round (Ronda 1 … 6)
  *   - Each box in a column = players who entered that round with a specific W-L record
- *   - Boxes are positioned vertically so they align with their two feeder boxes from
- *     the previous round (winner path = upper half, loser path = lower half)
- *   - Color scheme: gold = undefeated · green = winning record · amber = even · red = losing
+ *   - Boxes size to their content — no internal scroll, no wasted empty space
+ *   - Color scheme: green = winning record · yellow = even · red = losing record
  *
  * Data flow: uses already-fetched swissMatches + weeks from the page.
  * Processes matches round by round, tracking each player's cumulative record so we
@@ -22,20 +21,9 @@ import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS } from "@/lib/constants
 
 /* ── Layout constants ── */
 
-/*
- * Fixed column height — tall enough that boxes in the final round (6 boxes)
- * each have room for ~4 match rows without needing internal scroll,
- * while keeping the overall bracket visually proportionate.
- *
- * 840px ÷ 6 boxes = 140px per box → fits header(30px) + 4×match(26px) = 134px ✓
- * Round-1 box uses ~400px of its 840px — the gap is intentional (it's a bracket diagram).
- */
-const COL_H    = 840;  /* px — total drawable height for each round column */
-const COL_W    = 164;  /* px — width of each round column                  */
-const COL_GAP  = 10;   /* px — horizontal gap between columns               */
-const BOX_GAP  = 4;    /* px — vertical gap between boxes in the same column */
-const HEADER_H = 30;   /* px — height of the record badge header row        */
-const ROW_H    = 26;   /* px — height of each match entry row               */
+const COL_W   = 164;  /* px — width of each round column                  */
+const COL_GAP = 10;   /* px — horizontal gap between columns               */
+const BOX_GAP = 4;    /* px — vertical gap between boxes in the same column */
 
 /* ── Data types ── */
 
@@ -98,7 +86,6 @@ function buildColumns(
 			/*
 			 * In Swiss, both players should share the same record going into a match.
 			 * We use player_a's record as the canonical bucket key.
-			 * (Bye-adjusted outliers are rare and will gracefully land in the closest bucket.)
 			 */
 			const { wins, losses } = getRecord(m.player_a_id);
 			const key = `${r}|${wins}|${losses}`;
@@ -178,24 +165,14 @@ function boxStyle(wins: number, losses: number): BoxStyle {
 	};
 }
 
-/* ── Single record box ── */
+/* ── Single record box — sizes to content, no scroll ── */
 
-function RecordBox({
-	cell,
-	top,
-	height,
-}: {
-	cell: BracketCell;
-	top: number;
-	height: number;
-}) {
+function RecordBox({ cell }: { cell: BracketCell }) {
 	const style = boxStyle(cell.wins, cell.losses);
-	const inner = height - BOX_GAP;
 
 	return (
 		<div
-			className={`absolute left-0 right-0 overflow-hidden rounded-lg border ${style.border} bg-[hsl(215_25%_8%/0.85)]`}
-			style={{ top, height: inner }}
+			className={`overflow-hidden rounded-lg border ${style.border} bg-[hsl(215_25%_8%/0.85)]`}
 		>
 			{/* Header: record label + match count */}
 			<div
@@ -211,27 +188,18 @@ function RecordBox({
 				</span>
 			</div>
 
-			{/* Match list — no scroll; COL_H is sized so all rows fit */}
+			{/* Match list — no height cap, shows every match */}
 			{cell.matches.map((m) => (
 				<div
 					key={m.id}
-					className="border-b border-[hsl(215_20%_40%/0.08)] px-2 py-[2px]"
-					style={{ height: ROW_H }}
+					className="border-b border-[hsl(215_20%_40%/0.08)] px-2 py-1"
 				>
-					{/* Winner line */}
-					<p
-						className={`truncate text-[11px] font-semibold leading-snug ${
-							m.playerAWon ? "text-foreground" : "text-foreground/40"
-						}`}
-					>
+					{/* Winner */}
+					<p className="truncate text-[11px] font-semibold leading-snug text-foreground">
 						{m.playerAWon ? m.playerAName : m.playerBName}
 					</p>
-					{/* Loser line */}
-					<p
-						className={`truncate text-[11px] leading-snug ${
-							m.playerAWon ? "text-muted-foreground/45" : "text-foreground"
-						}`}
-					>
+					{/* Loser */}
+					<p className="truncate text-[11px] leading-snug text-muted-foreground/50">
 						{m.playerAWon ? m.playerBName : m.playerAName}
 					</p>
 				</div>
@@ -287,12 +255,9 @@ export default function SwissBracket({
 
 			{/* Bracket — horizontally scrollable on small screens */}
 			<div className="glass overflow-x-auto rounded-2xl p-4">
-				<div style={{ width: totalW }}>
+				<div style={{ minWidth: totalW }}>
 					{/* Round headers */}
-					<div
-						className="mb-2 flex"
-						style={{ gap: COL_GAP }}
-					>
+					<div className="mb-2 flex" style={{ gap: COL_GAP }}>
 						{columns.map((_, i) => (
 							<div
 								key={i}
@@ -304,39 +269,27 @@ export default function SwissBracket({
 						))}
 					</div>
 
-					{/* Columns */}
-					<div className="flex" style={{ gap: COL_GAP, height: COL_H }}>
-						{columns.map((cells, colIdx) => {
-							/*
-							 * Vertical positioning:
-							 * Column r has `numCells` equal-height boxes.
-							 * Box k (0 = top = best record) is at:
-							 *   top    = k * (COL_H / numCells)
-							 *   height = COL_H / numCells
-							 *
-							 * COL_H is computed dynamically so every box is tall enough
-							 * to show all its match rows without internal scrolling.
-							 */
-							const numCells = cells.length;
-							const boxH = COL_H / numCells;
-
-							return (
-								<div
-									key={colIdx}
-									className="relative shrink-0"
-									style={{ width: COL_W, height: COL_H }}
-								>
-									{cells.map((cell, k) => (
-										<RecordBox
-											key={`${cell.wins}-${cell.losses}`}
-											cell={cell}
-											top={k * boxH}
-											height={boxH}
-										/>
-									))}
-								</div>
-							);
-						})}
+					{/*
+					 * Columns — each independently sized to its content.
+					 * Boxes stack top-to-bottom within a column; the column with the
+					 * most content drives the overall bracket height naturally.
+					 * align-items: flex-start keeps shorter columns from stretching.
+					 */}
+					<div className="flex items-start" style={{ gap: COL_GAP }}>
+						{columns.map((cells, colIdx) => (
+							<div
+								key={colIdx}
+								className="flex shrink-0 flex-col"
+								style={{ width: COL_W, gap: BOX_GAP }}
+							>
+								{cells.map((cell) => (
+									<RecordBox
+										key={`${cell.wins}-${cell.losses}`}
+										cell={cell}
+									/>
+								))}
+							</div>
+						))}
 					</div>
 				</div>
 			</div>
