@@ -18,6 +18,12 @@
 .DS_Store
 *.pem
 
+# Claude Code internal files
+.claude/
+
+# Local data files
+*.csv
+
 # debug
 npm-debug.log*
 yarn-debug.log*
