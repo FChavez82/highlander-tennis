@@ -9,21 +9,24 @@
  *   - Boxes size to their content — no internal scroll, no wasted empty space
  *   - Color scheme: green = winning record · yellow = even · red = losing record
  *
- * Data flow: uses already-fetched swissMatches + weeks from the page.
- * Processes matches round by round, tracking each player's cumulative record so we
- * can assign every match to the correct W-L bucket.
+ * Connecting lines:
+ *   - SVG overlay with bezier S-curves drawn after layout (useLayoutEffect + refs)
+ *   - Green line = win path (winner advances to W+1, L bucket next round)
+ *   - Red line   = loss path (loser drops to W, L+1 bucket next round)
+ *
+ * Match rows show: winner name + score on same line · loser name below (muted)
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useLayoutEffect, forwardRef } from "react";
 import type { Match, ScheduleWeek } from "@/lib/db";
 import { determineWinner } from "@/lib/db";
 import { CATEGORY_MALE, CATEGORY_FEMALE, CATEGORY_LABELS, type Category } from "@/lib/constants";
 
 /* ── Layout constants ── */
 
-const COL_W   = 164;  /* px — width of each round column                  */
-const COL_GAP = 10;   /* px — horizontal gap between columns               */
-const BOX_GAP = 12;   /* px — vertical gap between boxes in the same column */
+const COL_W   = 164;  /* px — width of each round column                   */
+const COL_GAP = 36;   /* px — horizontal gap between columns (room for lines) */
+const BOX_GAP = 12;   /* px — vertical gap between boxes in the same column  */
 
 /* ── Data types ── */
 
@@ -167,45 +170,61 @@ function boxStyle(wins: number, losses: number): BoxStyle {
 
 /* ── Single record box — sizes to content, no scroll ── */
 
-function RecordBox({ cell }: { cell: BracketCell }) {
-	const style = boxStyle(cell.wins, cell.losses);
+const RecordBox = forwardRef<HTMLDivElement, { cell: BracketCell }>(
+	function RecordBox({ cell }, ref) {
+		const style = boxStyle(cell.wins, cell.losses);
+		const winner = (m: BracketMatch) => (m.playerAWon ? m.playerAName : m.playerBName);
+		const loser  = (m: BracketMatch) => (m.playerAWon ? m.playerBName : m.playerAName);
 
-	return (
-		<div
-			className={`overflow-hidden rounded-lg border ${style.border} bg-[hsl(215_25%_8%/0.85)]`}
-		>
-			{/* Header: record label + match count */}
+		return (
 			<div
-				className={`flex items-center justify-between px-2.5 py-1.5 ${style.headerBg}`}
+				ref={ref}
+				className={`overflow-hidden rounded-lg border ${style.border} bg-[hsl(215_25%_8%/0.85)]`}
 			>
-				<span
-					className={`rounded px-1.5 py-0.5 text-[11px] font-bold ring-1 ${style.recordBadge}`}
-				>
-					{cell.wins}-{cell.losses}
-				</span>
-				<span className="text-[10px] text-muted-foreground/50">
-					{cell.matches.length}P
-				</span>
-			</div>
-
-			{/* Match list — no height cap, shows every match */}
-			{cell.matches.map((m) => (
-				<div
-					key={m.id}
-					className="border-b border-[hsl(215_20%_40%/0.08)] px-2 py-1"
-				>
-					{/* Winner */}
-					<p className="truncate text-[11px] font-semibold leading-snug text-foreground">
-						{m.playerAWon ? m.playerAName : m.playerBName}
-					</p>
-					{/* Loser */}
-					<p className="truncate text-[11px] leading-snug text-muted-foreground/50">
-						{m.playerAWon ? m.playerBName : m.playerAName}
-					</p>
+				{/* Header: record label + match count */}
+				<div className={`flex items-center justify-between px-2.5 py-1.5 ${style.headerBg}`}>
+					<span className={`rounded px-1.5 py-0.5 text-[11px] font-bold ring-1 ${style.recordBadge}`}>
+						{cell.wins}-{cell.losses}
+					</span>
+					<span className="text-[10px] text-muted-foreground/50">
+						{cell.matches.length}P
+					</span>
 				</div>
-			))}
-		</div>
-	);
+
+				{/* Match rows: winner + score on one line, loser below */}
+				{cell.matches.map((m) => (
+					<div
+						key={m.id}
+						className="border-b border-[hsl(215_20%_40%/0.08)] px-2 py-1.5"
+					>
+						{/* Winner row: name (truncated) + score pushed to the right */}
+						<div className="flex items-baseline gap-1">
+							<p className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-snug text-foreground">
+								{winner(m)}
+							</p>
+							<span className="shrink-0 font-mono text-[10px] text-muted-foreground/70">
+								{m.score}
+							</span>
+						</div>
+						{/* Loser row */}
+						<p className="truncate text-[11px] leading-snug text-muted-foreground/50">
+							{loser(m)}
+						</p>
+					</div>
+				))}
+			</div>
+		);
+	}
+);
+
+/* ── SVG connecting line data ── */
+
+interface Line {
+	x1: number;
+	y1: number;
+	x2: number;
+	y2: number;
+	isWin: boolean; /* true = win path (green), false = loss path (red) */
 }
 
 /* ── Main export ── */
@@ -223,6 +242,85 @@ export default function SwissBracket({
 		() => buildColumns(swissMatches, weeks, category),
 		[swissMatches, weeks, category],
 	);
+
+	/* Refs for measuring box positions to draw SVG lines */
+	const bracketBodyRef = useRef<HTMLDivElement>(null);
+	const boxRefs = useRef(new Map<string, HTMLDivElement>());
+	const [lines, setLines] = useState<Line[]>([]);
+
+	/*
+	 * After every render that changes columns (new category or new data),
+	 * measure each box's position relative to the bracket body container
+	 * and compute bezier line coords connecting adjacent round boxes.
+	 *
+	 * useLayoutEffect fires synchronously after DOM mutations so lines
+	 * appear in the same paint as the boxes (no one-frame flicker).
+	 */
+	useLayoutEffect(() => {
+		const container = bracketBodyRef.current;
+		if (!container) return;
+
+		const containerRect = container.getBoundingClientRect();
+		const newLines: Line[] = [];
+
+		columns.forEach((cells, colIdx) => {
+			/* No lines needed from the last column */
+			if (colIdx >= columns.length - 1) return;
+
+			const nextCells = columns[colIdx + 1];
+
+			cells.forEach((cell) => {
+				const srcEl = boxRefs.current.get(`${colIdx}-${cell.wins}-${cell.losses}`);
+				if (!srcEl) return;
+
+				const srcRect = srcEl.getBoundingClientRect();
+				const x1 = srcRect.right - containerRect.left;
+				const y1 = srcRect.top + srcRect.height / 2 - containerRect.top;
+
+				/* Win path → (wins+1, losses) in next round */
+				const winTarget = nextCells.find(
+					(c) => c.wins === cell.wins + 1 && c.losses === cell.losses,
+				);
+				if (winTarget) {
+					const tgtEl = boxRefs.current.get(
+						`${colIdx + 1}-${winTarget.wins}-${winTarget.losses}`,
+					);
+					if (tgtEl) {
+						const tgtRect = tgtEl.getBoundingClientRect();
+						newLines.push({
+							x1,
+							y1,
+							x2: tgtRect.left - containerRect.left,
+							y2: tgtRect.top + tgtRect.height / 2 - containerRect.top,
+							isWin: true,
+						});
+					}
+				}
+
+				/* Loss path → (wins, losses+1) in next round */
+				const lossTarget = nextCells.find(
+					(c) => c.wins === cell.wins && c.losses === cell.losses + 1,
+				);
+				if (lossTarget) {
+					const tgtEl = boxRefs.current.get(
+						`${colIdx + 1}-${lossTarget.wins}-${lossTarget.losses}`,
+					);
+					if (tgtEl) {
+						const tgtRect = tgtEl.getBoundingClientRect();
+						newLines.push({
+							x1,
+							y1,
+							x2: tgtRect.left - containerRect.left,
+							y2: tgtRect.top + tgtRect.height / 2 - containerRect.top,
+							isWin: false,
+						});
+					}
+				}
+			});
+		});
+
+		setLines(newLines);
+	}, [columns]);
 
 	if (columns.length === 0) {
 		return (
@@ -270,26 +368,52 @@ export default function SwissBracket({
 					</div>
 
 					{/*
-					 * Columns — each independently sized to its content.
-					 * Boxes stack top-to-bottom within a column; the column with the
-					 * most content drives the overall bracket height naturally.
-					 * align-items: flex-start keeps shorter columns from stretching.
+					 * Bracket body — position:relative so the SVG overlay is
+					 * anchored to this element's top-left corner.
 					 */}
-					<div className="flex items-start" style={{ gap: COL_GAP }}>
-						{columns.map((cells, colIdx) => (
-							<div
-								key={colIdx}
-								className="flex shrink-0 flex-col"
-								style={{ width: COL_W, gap: BOX_GAP }}
-							>
-								{cells.map((cell) => (
-									<RecordBox
-										key={`${cell.wins}-${cell.losses}`}
-										cell={cell}
+					<div ref={bracketBodyRef} className="relative">
+						{/* SVG overlay — drawn on top of the boxes, pointer-events disabled */}
+						<svg
+							className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+						>
+							{lines.map((line, i) => {
+								const mx = (line.x1 + line.x2) / 2;
+								return (
+									<path
+										key={i}
+										/* Horizontal S-curve: exit right → bend → enter left */
+										d={`M ${line.x1} ${line.y1} C ${mx} ${line.y1}, ${mx} ${line.y2}, ${line.x2} ${line.y2}`}
+										fill="none"
+										stroke={line.isWin ? "#34d399" : "#f87171"}
+										strokeWidth="1.5"
+										strokeOpacity="0.5"
 									/>
-								))}
-							</div>
-						))}
+								);
+							})}
+						</svg>
+
+						{/* Columns — stacked boxes, independently sized to content */}
+						<div className="flex items-start" style={{ gap: COL_GAP }}>
+							{columns.map((cells, colIdx) => (
+								<div
+									key={colIdx}
+									className="flex shrink-0 flex-col"
+									style={{ width: COL_W, gap: BOX_GAP }}
+								>
+									{cells.map((cell) => (
+										<RecordBox
+											key={`${cell.wins}-${cell.losses}`}
+											cell={cell}
+											ref={(el) => {
+												const key = `${colIdx}-${cell.wins}-${cell.losses}`;
+												if (el) boxRefs.current.set(key, el);
+												else boxRefs.current.delete(key);
+											}}
+										/>
+									))}
+								</div>
+							))}
+						</div>
 					</div>
 				</div>
 			</div>
